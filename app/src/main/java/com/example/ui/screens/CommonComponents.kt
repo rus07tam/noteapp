@@ -16,6 +16,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,13 +27,15 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,9 +43,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
+import com.example.ui.util.AppIconView
+import com.example.ui.util.IconHelper
 import java.util.Calendar
 
 val APP_COLOR_PALETTE = listOf(
@@ -59,7 +67,8 @@ val APP_COLOR_PALETTE = listOf(
 val APP_ICONS_LIST = listOf(
     "📝", "📄", "📁", "📂", "💡", "🎯", "🚀", "📚",
     "💼", "☕", "⚡", "📌", "🔬", "🏷️", "📅", "🎨",
-    "⭐", "🔥", "📋", "🛠️", "🧩", "🌟", "✨", "📊"
+    "⭐", "🔥", "📋", "🛠️", "🧩", "🌟", "✨", "📊",
+    "💻", "🍕", "🧙‍♂️", "🦊", "🌿", "🏆", "🎁", "🔑"
 )
 
 fun parseColorHex(hex: String, default: Color = Color(0xFF3B82F6)): Color {
@@ -85,14 +94,16 @@ fun ColorPickerDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Выберите цвет маркера") },
+        title = { Text(stringResource(R.string.choose_color)) },
         text = {
             FlowRow(
-                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                APP_COLOR_PALETTE.forEach { (hex, name) ->
+                APP_COLOR_PALETTE.forEach { (hex, _) ->
                     val color = parseColorHex(hex)
                     val isSelected = hex.equals(currentColorHex, ignoreCase = true)
                     Box(
@@ -126,7 +137,7 @@ fun ColorPickerDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Закрыть")
+                Text(stringResource(R.string.close))
             }
         }
     )
@@ -139,32 +150,109 @@ fun IconPickerDialog(
     onIconSelected: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
+    var selectedTab by remember { mutableIntStateOf(if (currentIcon.startsWith("material:")) 1 else 0) }
+    var customEmojiInput by remember { mutableStateOf(if (!currentIcon.startsWith("material:")) currentIcon else "") }
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Выберите иконку") },
+        title = { Text(stringResource(R.string.choose_icon)) },
         text = {
-            FlowRow(
-                modifier = Modifier.fillMaxWidth().padding(4.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                APP_ICONS_LIST.forEach { iconEmoji ->
-                    val isSelected = iconEmoji == currentIcon
-                    Surface(
+            Column(modifier = Modifier.fillMaxWidth()) {
+                TabRow(selectedTabIndex = selectedTab) {
+                    Tab(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
+                        text = { Text(stringResource(R.string.tab_emojis)) }
+                    )
+                    Tab(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        text = { Text(stringResource(R.string.tab_material_icons)) }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (selectedTab == 0) {
+                    // Custom emoji input
+                    OutlinedTextField(
+                        value = customEmojiInput,
+                        onValueChange = { input ->
+                            customEmojiInput = input
+                            if (input.isNotBlank()) {
+                                onIconSelected(input.trim())
+                            }
+                        },
+                        label = { Text(stringResource(R.string.custom_emoji_label)) },
+                        placeholder = { Text(stringResource(R.string.custom_emoji_hint)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Preset emojis
+                    FlowRow(
                         modifier = Modifier
-                            .padding(4.dp)
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .clickable {
-                                onIconSelected(iconEmoji)
-                                onDismiss()
-                            },
-                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                        shape = RoundedCornerShape(12.dp),
-                        border = if (isSelected) androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
+                            .fillMaxWidth()
+                            .padding(2.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Text(text = iconEmoji, fontSize = 22.sp)
+                        APP_ICONS_LIST.forEach { iconEmoji ->
+                            val isSelected = iconEmoji == currentIcon
+                            Surface(
+                                modifier = Modifier
+                                    .padding(4.dp)
+                                    .size(44.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable {
+                                        onIconSelected(iconEmoji)
+                                        onDismiss()
+                                    },
+                                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                shape = RoundedCornerShape(12.dp),
+                                border = if (isSelected) androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(text = iconEmoji, fontSize = 22.sp)
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // Material icons gallery
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(5),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(240.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(IconHelper.MATERIAL_ICONS) { (key, vector) ->
+                            val isSelected = key == currentIcon
+                            Surface(
+                                modifier = Modifier
+                                    .size(44.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable {
+                                        onIconSelected(key)
+                                        onDismiss()
+                                    },
+                                color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                                shape = RoundedCornerShape(12.dp),
+                                border = if (isSelected) androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = vector,
+                                        contentDescription = key,
+                                        tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -172,7 +260,7 @@ fun IconPickerDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Закрыть")
+                Text(stringResource(R.string.close))
             }
         }
     )
@@ -196,12 +284,12 @@ fun ConfirmDeleteDialog(
                     onDismiss()
                 }
             ) {
-                Text("Удалить")
+                Text(stringResource(R.string.delete))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text(stringResource(R.string.cancel))
             }
         }
     )
@@ -241,12 +329,12 @@ fun SimpleInputDialog(
                 },
                 enabled = text.isNotBlank()
             ) {
-                Text("Сохранить")
+                Text(stringResource(R.string.save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

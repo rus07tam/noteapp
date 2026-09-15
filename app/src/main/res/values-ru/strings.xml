@@ -1,0 +1,243 @@
+<resources>
+    <string name="app_name">Заметки</string>
+
+    <!-- Navigation -->
+    <string name="nav_workspaces">Воркспейсы</string>
+    <string name="nav_files">Файлы</string>
+    <string name="nav_editor">Редактор</string>
+    <string name="nav_calendar">Календарь</string>
+    <string name="nav_tags">Теги</string>
+    <string name="nav_settings">Настройки</string>
+
+    <!-- Workspaces -->
+    <string name="workspaces_title">Воркспейсы</string>
+    <string name="workspaces_subtitle">Управление рабочими пространствами</string>
+    <string name="workspaces_desc">Файлы, календарь и теги отображаются в контексте выбранного активного воркспейса.</string>
+    <string name="workspace_active">Активен</string>
+    <string name="create_workspace">Новый воркспейс</string>
+    <string name="rename_workspace">Переименовать воркспейс</string>
+    <string name="clone_workspace">Клонировать воркспейс</string>
+    <string name="delete_workspace">Удалить воркспейс</string>
+    <string name="delete_workspace_prompt">Удалить воркспейс</string>
+    <string name="delete_workspace_confirm_prefix">Вы действительно хотите удалить</string>
+    <string name="delete_workspace_confirm_suffix">Все вложенные папки, документы и блоки будут безвозвратно удалены.</string>
+    <string name="delete_workspace_confirm">Вы действительно хотите удалить \'%1$s\'? Все вложенные папки, документы и блоки будут безвозвратно удалены.</string>
+    <string name="cannot_delete">Нельзя удалить</string>
+    <string name="cannot_delete_workspace">Нельзя удалить</string>
+    <string name="cannot_delete_workspace_msg">В приложении должен оставаться хотя бы один воркспейс.</string>
+    <string name="workspace_name">Название воркспейса</string>
+    <string name="new_workspace">Новый воркспейс</string>
+    <string name="select_as_active">Выбрать как активный</string>
+    <string name="workspace_copy_suffix">%1$s (Копия)</string>
+    <string name="copy_name">Название копии</string>
+    <string name="copy_suffix">Копия</string>
+    <string name="rename">Переименовать</string>
+    <string name="clone">Клонировать</string>
+    <string name="new_name">Новое название</string>
+    <string name="active">Активен</string>
+    <string name="actions">Действия</string>
+
+    <!-- Files -->
+    <string name="files_title">Файлы</string>
+    <string name="files_subtitle">Древо файлов и папок</string>
+    <string name="search_files_placeholder">Поиск файлов и папок…</string>
+    <string name="new_note">Заметка</string>
+    <string name="new_folder">Папка</string>
+    <string name="files_empty_title">В этом воркспейсе пока пусто</string>
+    <string name="files_empty_subtitle">Создайте папку или добавьте первую заметку</string>
+    <string name="root_files">Файлы без папки</string>
+    <string name="new_note_in_folder">Новая заметка</string>
+    <string name="new_subfolder">Новая подпапка</string>
+    <string name="edit_folder">Изменить папку</string>
+    <string name="delete_folder">Удалить папку</string>
+    <string name="delete_folder_confirm">Вы уверены, что хотите удалить папку \'%1$s\'? Все вложенные файлы и подпапки будут удалены.</string>
+    <string name="delete_doc">Удалить документ</string>
+    <string name="delete_doc_confirm">Вы уверены, что хотите удалить \'%1$s\'?</string>
+    <string name="folder_name">Название папки</string>
+    <string name="note_title">Название заметки</string>
+    <string name="move_item">Переместить в папку…</string>
+    <string name="move_to_root">Корень (без папки)</string>
+    <string name="open_in_editor">Открыть в редакторе</string>
+
+    <!-- Editor -->
+    <string name="editor_title">Редактор</string>
+    <string name="no_doc_selected">Документ не выбран</string>
+    <string name="go_to_files">Перейти к файлам</string>
+    <string name="mode_read">Чтение</string>
+    <string name="mode_write">Правка</string>
+    <string name="reading_mode">Чтение</string>
+    <string name="editing_mode">Редактирование</string>
+    <string name="back">Назад</string>
+    <string name="select_note_prompt">Выберите заметку в списке файлов или создайте новую</string>
+    <string name="search_in_doc">Поиск в документе…</string>
+    <string name="search_in_document">Поиск в заметке</string>
+    <string name="found_matches">Найдено: %1$d</string>
+    <string name="export">Экспорт</string>
+    <string name="export_title">Экспорт документа</string>
+    <string name="export_markdown">Экспорт в Markdown (.md)</string>
+    <string name="export_plain_text">Экспорт в простой текст (.txt)</string>
+    <string name="export_text">Экспорт в простой текст (.txt)</string>
+    <string name="copied_to_clipboard">Скопировано в буфер обмена!</string>
+    <string name="metadata_title">Метаданные</string>
+    <string name="created_date">Создан</string>
+    <string name="created_label">Создан</string>
+    <string name="updated_date">Изменен</string>
+    <string name="updated_label">Изменен</string>
+    <string name="calendar_date">Дата в календаре:</string>
+    <string name="calendar_date_label">Дата в календаре</string>
+    <string name="calendar_date_not_set">Не указана (нажмите для выбора)</string>
+    <string name="not_set_click_to_pick">Не указана (нажмите для выбора)</string>
+    <string name="not_set">Не указана</string>
+    <string name="calendar_date_none">Нет</string>
+    <string name="clear_date">Сбросить дату</string>
+    <string name="status_label">Статус:</string>
+    <string name="status_tag">Тег статуса</string>
+    <string name="status_tag_hint">Введите статус (напр. В работе, Готово)</string>
+    <string name="status_placeholder">Указать статус</string>
+    <string name="set_status">Указать статус</string>
+    <string name="edit_status">Изменить статус</string>
+    <string name="status_dialog_title">Тег статуса</string>
+    <string name="status_dialog_label">Статус (например: В работе, Готово, Черновик)</string>
+    <string name="general_tags">Теги:</string>
+    <string name="general_tags_label">Общие теги</string>
+    <string name="no_tags">Нет тегов</string>
+    <string name="add_tag">Добавить тег</string>
+    <string name="add_tag_title">Новый тег</string>
+    <string name="tag_name_label">Имя тега</string>
+    <string name="delete_tag">Удалить тег</string>
+    <string name="edit_note_title">Изменить название</string>
+    <string name="doc_empty_hint">Документ пуст. Нажмите \'+\', чтобы добавить первый блок.</string>
+    <string name="empty_document_hint">Документ пуст. Нажмите \'+\', чтобы добавить первый блок.</string>
+    <string name="add_block">Добавить блок</string>
+
+    <!-- Block types & actions -->
+    <string name="block_actions">Действия с блоком</string>
+    <string name="duplicate">Дублировать</string>
+    <string name="move_up">Переместить выше</string>
+    <string name="move_down">Переместить ниже</string>
+    <string name="indent_inc">Увеличить отступ</string>
+    <string name="indent_dec">Уменьшить отступ</string>
+    <string name="decrease_indent">Уменьшить уровень отступа</string>
+    <string name="increase_indent">Увеличить уровень отступа</string>
+    <string name="block_paragraph">Параграф</string>
+    <string name="block_paragraph_desc">Обычный текст</string>
+    <string name="paragraph_hint">Введите текст параграфа…</string>
+    <string name="block_h1">Заголовок 1 (H1)</string>
+    <string name="block_heading1">Заголовок 1</string>
+    <string name="block_h1_desc">Крупный заголовок раздела</string>
+    <string name="block_heading1_desc">Крупный заголовок раздела</string>
+    <string name="heading1_hint">Заголовок 1…</string>
+    <string name="block_h2">Заголовок 2 (H2)</string>
+    <string name="block_heading2">Заголовок 2</string>
+    <string name="block_h2_desc">Средний заголовок подраздела</string>
+    <string name="block_heading2_desc">Средний заголовок подраздела</string>
+    <string name="heading2_hint">Заголовок 2…</string>
+    <string name="block_h3">Заголовок 3 (H3)</string>
+    <string name="block_heading3">Заголовок 3</string>
+    <string name="block_h3_desc">Небольшой заголовок</string>
+    <string name="block_heading3_desc">Небольшой заголовок</string>
+    <string name="heading3_hint">Заголовок 3…</string>
+    <string name="block_bullet">Маркированный список</string>
+    <string name="block_bullet_list">Маркированный список</string>
+    <string name="block_bullet_desc">Список с точками</string>
+    <string name="block_bullet_list_desc">Список с точками</string>
+    <string name="block_number">Нумерованный список</string>
+    <string name="block_number_list">Нумерованный список</string>
+    <string name="block_number_desc">Нумерованный список 1, 2, 3…</string>
+    <string name="block_number_list_desc">Последовательный нумерованный список</string>
+    <string name="list_item_hint">Элемент списка…</string>
+    <string name="next_item">Следующий пункт</string>
+    <string name="block_todo">Todo (Задача)</string>
+    <string name="block_todo_desc">Интерактивный пункт с галочкой</string>
+    <string name="todo_item_hint">Описание задачи…</string>
+    <string name="next_todo">Следующая задача</string>
+    <string name="block_table">Таблица</string>
+    <string name="block_table_desc">Сетка строк и колонок</string>
+    <string name="block_divider">Разделитель</string>
+    <string name="block_divider_desc">Горизонтальная линия</string>
+    <string name="block_type_prefix">Блок: </string>
+
+    <!-- Table buttons -->
+    <string name="table_add_row">+ Строка</string>
+    <string name="add_row">+ Строка</string>
+    <string name="table_del_row">- Строка</string>
+    <string name="remove_row">- Строка</string>
+    <string name="table_add_col">+ Колонка</string>
+    <string name="add_col">+ Колонка</string>
+    <string name="table_del_col">- Колонка</string>
+    <string name="remove_col">- Колонка</string>
+
+    <!-- Rich text toolbar -->
+    <string name="format_bold">Жирный</string>
+    <string name="format_italic">Курсив</string>
+    <string name="format_strikethrough">Зачеркнутый</string>
+    <string name="format_underline">Подчеркнутый</string>
+    <string name="format_code">Код</string>
+
+    <!-- Calendar -->
+    <string name="calendar_title">Календарь</string>
+    <string name="calendar_today">Сегодня</string>
+    <string name="today">Сегодня</string>
+    <string name="calendar_notes_on">Заметки на %1$s</string>
+    <string name="notes_on_date">Заметки на</string>
+    <string name="linked_files_count">Связано файлов: %1$d</string>
+    <string name="linked_files">Связано файлов</string>
+    <string name="no_linked_files">Нет заметок на эту дату</string>
+    <string name="create_note_for_day">Создать</string>
+
+    <!-- Tags -->
+    <string name="tags_title">Теги</string>
+    <string name="tags_subtitle">Поиск заметок воркспейса \'%1$s\'</string>
+    <string name="search_tags">Поиск по тегам…</string>
+    <string name="search_tags_placeholder">Поиск по тегам…</string>
+    <string name="no_tags_found">Теги не найдены</string>
+    <string name="tags_empty_title">Теги не найдены</string>
+    <string name="no_tags_found_desc">Добавляйте теги в метаданных заметок для структурирования и быстрого поиска.</string>
+    <string name="tags_empty_desc">Добавляйте теги в метаданных заметок для структурирования и быстрого поиска.</string>
+    <string name="all_tags">Все теги (%1$d)</string>
+    <string name="files_with_tag">Заметки с тегом \'%1$s\' (%2$d)</string>
+    <string name="notes_with_tag">Заметки с тегом</string>
+    <string name="clear_filter">Сбросить фильтр</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Настройки</string>
+    <string name="theme_title">Тема оформления</string>
+    <string name="theme_dynamic">Динамическая (Material You)</string>
+    <string name="theme_dynamic_desc">Адаптируется к цветам обоев системы (Android 12+)</string>
+    <string name="theme_system">Системная</string>
+    <string name="theme_system_desc">Следовать системному темному режиму</string>
+    <string name="theme_light">Светлая</string>
+    <string name="theme_light_desc">Всегда использовать светлую тему</string>
+    <string name="theme_dark">Темная</string>
+    <string name="theme_dark_desc">Всегда использовать темную тему</string>
+    <string name="date_format_title">Формат отображения дат</string>
+    <string name="storage_title">Место хранения данных</string>
+    <string name="storage_desc">Все воркспейсы, папки, документы и блоки надежно сохраняются на устройстве в базе данных SQLite.</string>
+    <string name="storage_db_label">База данных SQLite</string>
+    <string name="storage_db_desc">Все воркспейсы, папки, документы, блоки и теги хранятся локально на устройстве в защищенной базе SQLite Room.</string>
+    <string name="storage_label_btn">Настроить метку пути</string>
+    <string name="storage_config_button">Настроить метку пути</string>
+    <string name="storage_label_title">Метка / Путь хранилища</string>
+    <string name="storage_path_label">Путь или метка хранилища</string>
+    <string name="example">Пример</string>
+    <string name="customization_title">Кастомизация интерфейса</string>
+    <string name="hide_nav_labels">Скрыть подписи навигации</string>
+    <string name="hide_nav_labels_desc">Отображать только иконки в нижней панели</string>
+
+    <!-- Dialogs & Buttons -->
+    <string name="save">Сохранить</string>
+    <string name="cancel">Отмена</string>
+    <string name="close">Закрыть</string>
+    <string name="create">Создать</string>
+    <string name="delete">Удалить</string>
+    <string name="add">Добавить</string>
+    <string name="ok">OK</string>
+    <string name="color">Цвет: </string>
+    <string name="icon">Иконка: </string>
+    <string name="choose_color">Выбрать цвет</string>
+    <string name="choose_icon">Выбрать иконку</string>
+    <string name="tab_emojis">Эмодзи</string>
+    <string name="tab_material_icons">Иконки Material</string>
+    <string name="custom_emoji_label">Свой эмодзи или символ</string>
+    <string name="custom_emoji_hint">Введите или вставьте любой эмодзи…</string>
+</resources>

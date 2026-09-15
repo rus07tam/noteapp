@@ -116,7 +116,8 @@ class AppRepository(private val database: AppDatabase) {
                     type = block.type,
                     content = block.content,
                     isChecked = block.isChecked,
-                    tableDataJson = block.tableDataJson
+                    tableDataJson = block.tableDataJson,
+                    indentLevel = block.indentLevel
                 )
             }
             blockDao.insertBlocks(newBlocks)
@@ -224,7 +225,8 @@ class AppRepository(private val database: AppDatabase) {
         type: BlockType,
         content: String = "",
         isChecked: Boolean = false,
-        tableDataJson: String = ""
+        tableDataJson: String = "",
+        indentLevel: Int = 0
     ): Long = withContext(Dispatchers.IO) {
         val existing = blockDao.getBlocksForDocumentSync(documentId)
         val nextOrder = if (existing.isEmpty()) 0 else (existing.maxOf { it.orderIndex } + 1)
@@ -245,7 +247,8 @@ class AppRepository(private val database: AppDatabase) {
                 type = type,
                 content = content,
                 isChecked = isChecked,
-                tableDataJson = defaultTable
+                tableDataJson = defaultTable,
+                indentLevel = indentLevel
             )
         )
         // Touch document update time
@@ -253,6 +256,60 @@ class AppRepository(private val database: AppDatabase) {
             documentDao.updateDocument(it.copy(updatedAt = System.currentTimeMillis()))
         }
         id
+    }
+
+    suspend fun insertBlockAfter(
+        afterBlock: BlockEntity,
+        type: BlockType,
+        content: String = "",
+        indentLevel: Int = afterBlock.indentLevel
+    ): Long = withContext(Dispatchers.IO) {
+        val all = blockDao.getBlocksForDocumentSync(afterBlock.documentId).sortedBy { it.orderIndex }
+        val targetIdx = all.indexOfFirst { it.id == afterBlock.id }
+        val insertOrder = afterBlock.orderIndex + 1
+
+        for (i in targetIdx + 1 until all.size) {
+            val item = all[i]
+            blockDao.updateBlock(item.copy(orderIndex = item.orderIndex + 1))
+        }
+
+        val defaultTable = if (type == BlockType.TABLE) {
+            TableHelper.serializeTable(
+                listOf(
+                    listOf("Колонка 1", "Колонка 2"),
+                    listOf("Данные 1", "Данные 2")
+                )
+            )
+        } else ""
+
+        val newId = blockDao.insertBlock(
+            BlockEntity(
+                documentId = afterBlock.documentId,
+                orderIndex = insertOrder,
+                type = type,
+                content = content,
+                isChecked = false,
+                tableDataJson = defaultTable,
+                indentLevel = indentLevel
+            )
+        )
+        documentDao.getDocumentByIdSync(afterBlock.documentId)?.let {
+            documentDao.updateDocument(it.copy(updatedAt = System.currentTimeMillis()))
+        }
+        newId
+    }
+
+    suspend fun moveDocument(documentId: Long, targetFolderId: Long?) = withContext(Dispatchers.IO) {
+        documentDao.getDocumentByIdSync(documentId)?.let { doc ->
+            documentDao.updateDocument(doc.copy(folderId = targetFolderId, updatedAt = System.currentTimeMillis()))
+        }
+    }
+
+    suspend fun moveFolder(folderId: Long, targetParentId: Long?) = withContext(Dispatchers.IO) {
+        if (folderId == targetParentId) return@withContext
+        folderDao.getFolderById(folderId)?.let { folder ->
+            folderDao.updateFolder(folder.copy(parentId = targetParentId, updatedAt = System.currentTimeMillis()))
+        }
     }
 
     suspend fun updateBlock(block: BlockEntity) = withContext(Dispatchers.IO) {
@@ -295,7 +352,8 @@ class AppRepository(private val database: AppDatabase) {
                 type = block.type,
                 content = block.content,
                 isChecked = block.isChecked,
-                tableDataJson = block.tableDataJson
+                tableDataJson = block.tableDataJson,
+                indentLevel = block.indentLevel
             )
         )
         documentDao.getDocumentByIdSync(block.documentId)?.let {

@@ -17,21 +17,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ColorLens
-import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.SettingsBrightness
+import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Storage
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -43,10 +39,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.R
 import com.example.ui.viewmodel.AppThemeSetting
 import com.example.ui.viewmodel.NotesViewModel
 import java.text.SimpleDateFormat
@@ -60,13 +57,14 @@ fun SettingsScreen(viewModel: NotesViewModel) {
     val currentTheme by viewModel.themeSetting.collectAsStateWithLifecycle()
     val currentDateFormat by viewModel.dateFormatPattern.collectAsStateWithLifecycle()
     val storageLocation by viewModel.storageLocation.collectAsStateWithLifecycle()
+    val hideNavLabels by viewModel.hideNavLabels.collectAsStateWithLifecycle()
 
     var showChangeStorageDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Настройки") }
+                title = { Text(stringResource(R.string.settings_title)) }
             )
         }
     ) { padding ->
@@ -77,6 +75,45 @@ fun SettingsScreen(viewModel: NotesViewModel) {
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // NAVIGATION BAR LABELS TOGGLE
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(Icons.Default.Navigation, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        stringResource(R.string.hide_nav_labels),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        stringResource(R.string.hide_nav_labels_desc),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            Switch(
+                                checked = hideNavLabels,
+                                onCheckedChange = { viewModel.setHideNavLabels(it) }
+                            )
+                        }
+                    }
+                }
+            }
+
             // THEME SELECTION
             item {
                 Card(
@@ -89,34 +126,34 @@ fun SettingsScreen(viewModel: NotesViewModel) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.ColorLens, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Тема оформления", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.theme_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         }
                         Spacer(modifier = Modifier.height(12.dp))
 
                         ThemeOptionRow(
-                            title = "Динамическая (Material You)",
-                            subtitle = "Цвета адаптируются под обои системы (Android 12+)",
+                            title = stringResource(R.string.theme_dynamic),
+                            subtitle = stringResource(R.string.theme_dynamic_desc),
                             selected = currentTheme == AppThemeSetting.DYNAMIC,
                             onClick = { viewModel.setThemeSetting(AppThemeSetting.DYNAMIC) }
                         )
 
                         ThemeOptionRow(
-                            title = "Системная",
-                            subtitle = "Следовать за системными настройками темной темы",
+                            title = stringResource(R.string.theme_system),
+                            subtitle = stringResource(R.string.theme_system_desc),
                             selected = currentTheme == AppThemeSetting.SYSTEM,
                             onClick = { viewModel.setThemeSetting(AppThemeSetting.SYSTEM) }
                         )
 
                         ThemeOptionRow(
-                            title = "Светлая",
-                            subtitle = "Всегда использовать светлый режим",
+                            title = stringResource(R.string.theme_light),
+                            subtitle = stringResource(R.string.theme_light_desc),
                             selected = currentTheme == AppThemeSetting.LIGHT,
                             onClick = { viewModel.setThemeSetting(AppThemeSetting.LIGHT) }
                         )
 
                         ThemeOptionRow(
-                            title = "Темная",
-                            subtitle = "Всегда использовать темный режим",
+                            title = stringResource(R.string.theme_dark),
+                            subtitle = stringResource(R.string.theme_dark_desc),
                             selected = currentTheme == AppThemeSetting.DARK,
                             onClick = { viewModel.setThemeSetting(AppThemeSetting.DARK) }
                         )
@@ -136,7 +173,7 @@ fun SettingsScreen(viewModel: NotesViewModel) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Формат отображения даты", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.date_format_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         }
                         Spacer(modifier = Modifier.height(12.dp))
 
@@ -168,7 +205,7 @@ fun SettingsScreen(viewModel: NotesViewModel) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Column {
                                     Text(text = pattern, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                                    Text(text = "Пример: $example", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(text = "${stringResource(R.string.example)}: $example", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                         }
@@ -188,12 +225,12 @@ fun SettingsScreen(viewModel: NotesViewModel) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Storage, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Место хранения данных", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.storage_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         }
                         Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
-                            text = "Локальная база данных Room (SQLite):",
+                            text = stringResource(R.string.storage_db_label),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -205,7 +242,7 @@ fun SettingsScreen(viewModel: NotesViewModel) {
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Все воркспейсы, папки, документы и блоки хранятся надежно на устройстве в изолированном защищенном хранилище SQLite.",
+                            text = stringResource(R.string.storage_db_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -216,7 +253,7 @@ fun SettingsScreen(viewModel: NotesViewModel) {
                         ) {
                             Icon(Icons.Default.Folder, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("Настроить метку хранилища")
+                            Text(stringResource(R.string.storage_config_button))
                         }
                     }
                 }
@@ -230,13 +267,13 @@ fun SettingsScreen(viewModel: NotesViewModel) {
 
     if (showChangeStorageDialog) {
         SimpleInputDialog(
-            title = "Метка места хранения",
+            title = stringResource(R.string.storage_label_title),
             initialValue = storageLocation,
-            label = "Путь / Метка каталога",
+            label = stringResource(R.string.storage_path_label),
             onConfirm = { newLocation ->
                 viewModel.setStorageLocation(newLocation)
                 showChangeStorageDialog = false
-                Toast.makeText(context, "Настройка сохранена", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Saved", Toast.LENGTH_SHORT).show()
             },
             onDismiss = { showChangeStorageDialog = false }
         )

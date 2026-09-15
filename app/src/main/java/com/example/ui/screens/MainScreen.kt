@@ -23,36 +23,43 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.R
 import com.example.ui.viewmodel.AppScreen
 import com.example.ui.viewmodel.NotesViewModel
 
 @Composable
 fun MainScreen(viewModel: NotesViewModel) {
     val currentScreen by viewModel.currentScreen.collectAsStateWithLifecycle()
+    val hideNavLabels by viewModel.hideNavLabels.collectAsStateWithLifecycle()
     val configuration = LocalConfiguration.current
     val isWideScreen = configuration.screenWidthDp >= 600
 
     val navItems = listOf(
-        NavigationItemData(AppScreen.WORKSPACES, "Воркспейсы", Icons.Default.Dashboard),
-        NavigationItemData(AppScreen.FILES, "Файлы", Icons.Default.Folder),
-        NavigationItemData(AppScreen.EDITOR, "Редактор", Icons.Default.Edit),
-        NavigationItemData(AppScreen.CALENDAR, "Календарь", Icons.Default.CalendarMonth),
-        NavigationItemData(AppScreen.TAGS, "Теги", Icons.Default.Label),
-        NavigationItemData(AppScreen.SETTINGS, "Настройки", Icons.Default.Settings)
+        NavigationItemData(AppScreen.WORKSPACES, R.string.nav_workspaces, Icons.Default.Dashboard),
+        NavigationItemData(AppScreen.FILES, R.string.nav_files, Icons.Default.Folder),
+        NavigationItemData(AppScreen.EDITOR, R.string.nav_editor, Icons.Default.Edit),
+        NavigationItemData(AppScreen.CALENDAR, R.string.nav_calendar, Icons.Default.CalendarMonth),
+        NavigationItemData(AppScreen.TAGS, R.string.nav_tags, Icons.Default.Label),
+        NavigationItemData(AppScreen.SETTINGS, R.string.nav_settings, Icons.Default.Settings)
     )
 
     if (isWideScreen) {
         Row(modifier = Modifier.fillMaxSize()) {
             NavigationRail {
                 navItems.forEach { item ->
+                    val title = stringResource(item.titleRes)
                     NavigationRailItem(
                         selected = currentScreen == item.screen,
                         onClick = { viewModel.navigateTo(item.screen) },
-                        icon = { Icon(item.icon, contentDescription = item.title) },
-                        label = { Text(item.title, fontSize = 11.sp) }
+                        icon = { Icon(item.icon, contentDescription = title) },
+                        label = if (!hideNavLabels) {
+                            { Text(title, fontSize = 11.sp) }
+                        } else null,
+                        alwaysShowLabel = !hideNavLabels
                     )
                 }
             }
@@ -67,11 +74,15 @@ fun MainScreen(viewModel: NotesViewModel) {
                     tonalElevation = 6.dp
                 ) {
                     navItems.forEach { item ->
+                        val title = stringResource(item.titleRes)
                         NavigationBarItem(
                             selected = currentScreen == item.screen,
                             onClick = { viewModel.navigateTo(item.screen) },
-                            icon = { Icon(item.icon, contentDescription = item.title) },
-                            label = { Text(item.title, fontSize = 10.sp, maxLines = 1) }
+                            icon = { Icon(item.icon, contentDescription = title) },
+                            label = if (!hideNavLabels) {
+                                { Text(title, fontSize = 10.sp, maxLines = 1) }
+                            } else null,
+                            alwaysShowLabel = !hideNavLabels
                         )
                     }
                 }
@@ -104,6 +115,6 @@ fun ScreenContent(currentScreen: AppScreen, viewModel: NotesViewModel) {
 
 data class NavigationItemData(
     val screen: AppScreen,
-    val title: String,
+    val titleRes: Int,
     val icon: androidx.compose.ui.graphics.vector.ImageVector
 )

@@ -95,5 +95,6 @@ data class BlockEntity(
     val type: BlockType,
     val content: String = "",
     val isChecked: Boolean = false,
-    val tableDataJson: String = "" // JSON representation for tables
+    val tableDataJson: String = "", // JSON representation for tables
+    val indentLevel: Int = 0 // 0 = root, 1 = nested, 2 = sub-nested
 )

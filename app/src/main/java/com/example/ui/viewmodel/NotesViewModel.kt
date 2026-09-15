@@ -78,6 +78,9 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val foldersInWorkspace: StateFlow<List<FolderEntity>> get() = foldersForActiveWorkspace
+    val documentsInWorkspace: StateFlow<List<DocumentEntity>> get() = documentsForActiveWorkspace
+
     // Active Document in Editor
     private val _activeDocumentId = MutableStateFlow<Long?>(null)
     val activeDocumentId: StateFlow<Long?> = _activeDocumentId.asStateFlow()
@@ -136,6 +139,11 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
     )
     val storageLocation: StateFlow<String> = _storageLocation.asStateFlow()
 
+    private val _hideNavLabels = MutableStateFlow(
+        prefs.getBoolean("hide_nav_labels", false)
+    )
+    val hideNavLabels: StateFlow<Boolean> = _hideNavLabels.asStateFlow()
+
     init {
         viewModelScope.launch {
             val initialWsId = repository.checkAndSeedDefaultData()
@@ -174,6 +182,10 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun toggleSearch() {
+        toggleSearchVisible()
+    }
+
     fun setEditorSearchQuery(query: String) {
         _editorSearchQuery.value = query
     }
@@ -199,6 +211,11 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
     fun setStorageLocation(path: String) {
         _storageLocation.value = path
         prefs.edit().putString("storage_location", path).apply()
+    }
+
+    fun setHideNavLabels(hide: Boolean) {
+        _hideNavLabels.value = hide
+        prefs.edit().putBoolean("hide_nav_labels", hide).apply()
     }
 
     fun formatDate(timestamp: Long?): String {
@@ -265,6 +282,12 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun moveFolder(folderId: Long, targetParentId: Long?) {
+        viewModelScope.launch {
+            repository.moveFolder(folderId, targetParentId)
+        }
+    }
+
     // Document actions
     fun createDocument(folderId: Long?, title: String, icon: String = "📝", colorHex: String = "#3B82F6", calendarDate: Long? = null) {
         val wsId = _activeWorkspaceId.value
@@ -280,6 +303,12 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
             )
             openDocumentInEditor(id)
             _isEditMode.value = true
+        }
+    }
+
+    fun moveDocument(documentId: Long, targetFolderId: Long?) {
+        viewModelScope.launch {
+            repository.moveDocument(documentId, targetFolderId)
         }
     }
 
@@ -349,10 +378,23 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // Block actions
-    fun addBlock(type: BlockType, content: String = "") {
+    fun addBlock(type: BlockType, content: String = "", indentLevel: Int = 0) {
         val docId = _activeDocumentId.value ?: return
         viewModelScope.launch {
-            repository.addBlock(docId, type, content)
+            repository.addBlock(docId, type, content, indentLevel = indentLevel)
+        }
+    }
+
+    fun insertBlockAfter(afterBlock: BlockEntity, type: BlockType, content: String = "", indentLevel: Int = afterBlock.indentLevel) {
+        viewModelScope.launch {
+            repository.insertBlockAfter(afterBlock, type, content, indentLevel)
+        }
+    }
+
+    fun changeBlockIndent(block: BlockEntity, delta: Int) {
+        val newIndent = (block.indentLevel + delta).coerceIn(0, 3)
+        if (newIndent != block.indentLevel) {
+            updateBlock(block.copy(indentLevel = newIndent))
         }
     }
 

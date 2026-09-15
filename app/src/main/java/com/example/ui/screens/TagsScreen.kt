@@ -32,7 +32,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -43,11 +42,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.R
+import com.example.ui.util.AppIconView
 import com.example.ui.viewmodel.NotesViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -92,9 +94,9 @@ fun TagsScreen(viewModel: NotesViewModel) {
             TopAppBar(
                 title = {
                     Column {
-                        Text("Теги", style = MaterialTheme.typography.titleLarge)
+                        Text(stringResource(R.string.tags_title), style = MaterialTheme.typography.titleLarge)
                         Text(
-                            text = "Поиск файлов по тегам воркспейса '${activeWorkspace?.name ?: ""}'",
+                            text = "${stringResource(R.string.tags_subtitle)} '${activeWorkspace?.name ?: ""}'",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -114,12 +116,12 @@ fun TagsScreen(viewModel: NotesViewModel) {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Поиск среди тегов...") },
+                    placeholder = { Text(stringResource(R.string.search_tags_placeholder)) },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Default.Close, contentDescription = "Очистить")
+                                Icon(Icons.Default.Close, contentDescription = null)
                             }
                         }
                     },
@@ -140,12 +142,12 @@ fun TagsScreen(viewModel: NotesViewModel) {
                             Text("🏷️", fontSize = 44.sp)
                             Spacer(modifier = Modifier.height(10.dp))
                             Text(
-                                "Теги не найдены",
+                                stringResource(R.string.tags_empty_title),
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
-                                "Добавьте теги в метаданных заметок, чтобы группировать файлы.",
+                                stringResource(R.string.tags_empty_desc),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -155,7 +157,7 @@ fun TagsScreen(viewModel: NotesViewModel) {
             } else {
                 item {
                     Text(
-                        "Все теги (${filteredTags.size})",
+                        "${stringResource(R.string.all_tags)} (${filteredTags.size})",
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -194,12 +196,12 @@ fun TagsScreen(viewModel: NotesViewModel) {
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
-                                text = "Файлы с тегом '#$selectedTag' (${matchingDocs.size})",
+                                text = "${stringResource(R.string.notes_with_tag)} '#$selectedTag' (${matchingDocs.size})",
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.Bold
                             )
                             IconButton(onClick = { viewModel.setSelectedTag(null) }) {
-                                Icon(Icons.Default.Close, contentDescription = "Сбросить фильтр", modifier = Modifier.size(18.dp))
+                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.clear_filter), modifier = Modifier.size(18.dp))
                             }
                         }
                     }
@@ -225,7 +227,7 @@ fun TagsScreen(viewModel: NotesViewModel) {
                                     .padding(14.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(doc.icon, fontSize = 22.sp)
+                                AppIconView(icon = doc.icon, size = 24.dp, fontSize = 22.sp, tint = markerColor)
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text(

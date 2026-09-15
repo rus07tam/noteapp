@@ -38,7 +38,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -50,11 +49,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.R
 import com.example.data.local.WorkspaceEntity
+import com.example.ui.util.AppIconView
 import com.example.ui.viewmodel.AppScreen
 import com.example.ui.viewmodel.NotesViewModel
 
@@ -74,9 +75,9 @@ fun WorkspacesScreen(viewModel: NotesViewModel) {
             TopAppBar(
                 title = {
                     Column {
-                        Text("Воркспейсы", style = MaterialTheme.typography.titleLarge)
+                        Text(stringResource(R.string.workspaces_title), style = MaterialTheme.typography.titleLarge)
                         Text(
-                            "Управление рабочими пространствами",
+                            stringResource(R.string.workspaces_subtitle),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -89,7 +90,7 @@ fun WorkspacesScreen(viewModel: NotesViewModel) {
                 onClick = { showCreateDialog = true },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Создать воркспейс")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create_workspace))
             }
         }
     ) { padding ->
@@ -103,7 +104,7 @@ fun WorkspacesScreen(viewModel: NotesViewModel) {
             item {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    "Файлы, календарь и теги отображаются в контексте выбранного активного воркспейса.",
+                    stringResource(R.string.workspaces_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -150,7 +151,7 @@ fun WorkspacesScreen(viewModel: NotesViewModel) {
                                 .border(1.5.dp, markerColor, RoundedCornerShape(14.dp)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(text = ws.icon, fontSize = 24.sp)
+                            AppIconView(icon = ws.icon, size = 26.dp, fontSize = 24.sp, tint = markerColor)
                         }
 
                         Spacer(modifier = Modifier.width(14.dp))
@@ -166,7 +167,7 @@ fun WorkspacesScreen(viewModel: NotesViewModel) {
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Icon(
                                         Icons.Default.CheckCircle,
-                                        contentDescription = "Активный",
+                                        contentDescription = stringResource(R.string.active),
                                         tint = markerColor,
                                         modifier = Modifier.size(18.dp)
                                     )
@@ -174,7 +175,7 @@ fun WorkspacesScreen(viewModel: NotesViewModel) {
                             }
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Обновлено: ${viewModel.formatDate(ws.updatedAt)}",
+                                text = "${stringResource(R.string.updated_label)}: ${viewModel.formatDate(ws.updatedAt)}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -184,7 +185,7 @@ fun WorkspacesScreen(viewModel: NotesViewModel) {
                         var menuExpanded by remember { mutableStateOf(false) }
                         Box {
                             IconButton(onClick = { menuExpanded = true }) {
-                                Icon(Icons.Default.MoreVert, contentDescription = "Действия")
+                                Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.actions))
                             }
                             DropdownMenu(
                                 expanded = menuExpanded,
@@ -192,7 +193,7 @@ fun WorkspacesScreen(viewModel: NotesViewModel) {
                             ) {
                                 if (!isActive) {
                                     DropdownMenuItem(
-                                        text = { Text("Выбрать как активный") },
+                                        text = { Text(stringResource(R.string.select_as_active)) },
                                         leadingIcon = { Icon(Icons.Default.CheckCircle, contentDescription = null) },
                                         onClick = {
                                             menuExpanded = false
@@ -201,7 +202,7 @@ fun WorkspacesScreen(viewModel: NotesViewModel) {
                                     )
                                 }
                                 DropdownMenuItem(
-                                    text = { Text("Переименовать") },
+                                    text = { Text(stringResource(R.string.rename)) },
                                     leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
                                     onClick = {
                                         menuExpanded = false
@@ -209,7 +210,7 @@ fun WorkspacesScreen(viewModel: NotesViewModel) {
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Клонировать") },
+                                    text = { Text(stringResource(R.string.clone)) },
                                     leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
                                     onClick = {
                                         menuExpanded = false
@@ -217,7 +218,7 @@ fun WorkspacesScreen(viewModel: NotesViewModel) {
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Удалить", color = MaterialTheme.colorScheme.error) },
+                                    text = { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) },
                                     leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
                                     onClick = {
                                         menuExpanded = false
@@ -250,9 +251,9 @@ fun WorkspacesScreen(viewModel: NotesViewModel) {
     // Dialog: Rename Workspace
     workspaceToRename?.let { ws ->
         SimpleInputDialog(
-            title = "Переименовать воркспейс",
+            title = stringResource(R.string.rename_workspace),
             initialValue = ws.name,
-            label = "Новое название",
+            label = stringResource(R.string.new_name),
             onConfirm = { newName ->
                 viewModel.renameWorkspace(ws, newName)
                 workspaceToRename = null
@@ -264,9 +265,9 @@ fun WorkspacesScreen(viewModel: NotesViewModel) {
     // Dialog: Clone Workspace
     workspaceToClone?.let { ws ->
         SimpleInputDialog(
-            title = "Клонировать воркспейс",
-            initialValue = "${ws.name} (Копия)",
-            label = "Название копии",
+            title = stringResource(R.string.clone_workspace),
+            initialValue = "${ws.name} (${stringResource(R.string.copy_suffix)})",
+            label = stringResource(R.string.copy_name),
             onConfirm = { cloneName ->
                 viewModel.cloneWorkspace(ws.id, cloneName)
                 workspaceToClone = null
@@ -281,18 +282,18 @@ fun WorkspacesScreen(viewModel: NotesViewModel) {
         if (isOnlyOne) {
             AlertDialog(
                 onDismissRequest = { workspaceToDelete = null },
-                title = { Text("Нельзя удалить") },
-                text = { Text("В приложении должен оставаться хотя бы один воркспейс.") },
+                title = { Text(stringResource(R.string.cannot_delete)) },
+                text = { Text(stringResource(R.string.cannot_delete_workspace_msg)) },
                 confirmButton = {
                     TextButton(onClick = { workspaceToDelete = null }) {
-                        Text("Понятно")
+                        Text(stringResource(R.string.ok))
                     }
                 }
             )
         } else {
             ConfirmDeleteDialog(
-                title = "Удалить воркспейс?",
-                message = "Вы действительно хотите удалить '${ws.name}'? Все вложенные папки, документы и блоки будут безвозвратно удалены.",
+                title = stringResource(R.string.delete_workspace_prompt),
+                message = "${stringResource(R.string.delete_workspace_confirm_prefix)} '${ws.name}'? ${stringResource(R.string.delete_workspace_confirm_suffix)}",
                 onConfirm = {
                     viewModel.deleteWorkspace(ws)
                     workspaceToDelete = null
@@ -316,13 +317,13 @@ fun CreateWorkspaceDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Новый воркспейс") },
+        title = { Text(stringResource(R.string.new_workspace)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Название воркспейса") },
+                    label = { Text(stringResource(R.string.workspace_name)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -340,8 +341,8 @@ fun CreateWorkspaceDialog(
                             .clickable { showIconPicker = true }
                             .padding(8.dp)
                     ) {
-                        Text("Иконка: ", style = MaterialTheme.typography.bodyMedium)
-                        Text(selectedIcon, fontSize = 24.sp)
+                        Text("${stringResource(R.string.icon)}: ", style = MaterialTheme.typography.bodyMedium)
+                        AppIconView(icon = selectedIcon, size = 26.dp, fontSize = 24.sp, tint = parseColorHex(selectedColorHex))
                     }
 
                     // Color Picker trigger
@@ -352,7 +353,7 @@ fun CreateWorkspaceDialog(
                             .clickable { showColorPicker = true }
                             .padding(8.dp)
                     ) {
-                        Text("Цвет: ", style = MaterialTheme.typography.bodyMedium)
+                        Text("${stringResource(R.string.color)}: ", style = MaterialTheme.typography.bodyMedium)
                         Box(
                             modifier = Modifier
                                 .size(24.dp)
@@ -372,12 +373,12 @@ fun CreateWorkspaceDialog(
                 },
                 enabled = name.isNotBlank()
             ) {
-                Text("Создать")
+                Text(stringResource(R.string.create))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text(stringResource(R.string.cancel))
             }
         }
     )

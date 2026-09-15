@@ -32,27 +32,36 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.FormatIndentDecrease
+import androidx.compose.material.icons.automirrored.filled.FormatIndentIncrease
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FormatBold
+import androidx.compose.material.icons.filled.FormatItalic
 import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.FormatListNumbered
+import androidx.compose.material.icons.filled.FormatStrikethrough
+import androidx.compose.material.icons.filled.FormatUnderlined
 import androidx.compose.material.icons.filled.HorizontalRule
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material.icons.filled.Title
-import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
@@ -62,11 +71,11 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -77,28 +86,37 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.R
 import com.example.data.local.BlockEntity
 import com.example.data.local.BlockType
 import com.example.data.local.DocumentEntity
 import com.example.data.local.TableHelper
+import com.example.ui.util.AppIconView
+import com.example.ui.util.RichTextHelper
 import com.example.ui.viewmodel.AppScreen
 import com.example.ui.viewmodel.NotesViewModel
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -123,10 +141,10 @@ fun EditorScreen(viewModel: NotesViewModel) {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Редактор") },
+                    title = { Text(stringResource(R.string.editor_title)) },
                     navigationIcon = {
                         IconButton(onClick = { viewModel.navigateTo(AppScreen.FILES) }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                         }
                     }
                 )
@@ -141,10 +159,13 @@ fun EditorScreen(viewModel: NotesViewModel) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text("📝", fontSize = 48.sp)
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text("Документ не выбран", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        stringResource(R.string.select_note_prompt),
+                        style = MaterialTheme.typography.titleMedium
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = { viewModel.navigateTo(AppScreen.FILES) }) {
-                        Text("Перейти к файлам")
+                        Text(stringResource(R.string.go_to_files))
                     }
                 }
             }
@@ -158,21 +179,13 @@ fun EditorScreen(viewModel: NotesViewModel) {
     Scaffold(
         topBar = {
             Column {
-                // Visual marker color top strip accent
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(5.dp)
-                        .background(markerColor)
-                )
-
                 TopAppBar(
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = markerColor.copy(alpha = 0.08f)
+                        containerColor = MaterialTheme.colorScheme.surface
                     ),
                     navigationIcon = {
                         IconButton(onClick = { viewModel.navigateTo(AppScreen.FILES) }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "К файлам")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                         }
                     },
                     title = {
@@ -182,70 +195,86 @@ fun EditorScreen(viewModel: NotesViewModel) {
                                 if (isEditMode) showEditTitleDialog = true
                             }
                         ) {
-                            // Clickable icon to change emoji
-                            Text(
-                                text = doc.icon,
-                                fontSize = 24.sp,
+                            // Icon picker trigger
+                            Surface(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(6.dp))
-                                    .clickable(enabled = isEditMode) { showIconPicker = true }
-                                    .padding(horizontal = 4.dp, vertical = 2.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = doc.title,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                maxLines = 1
-                            )
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .clickable { if (isEditMode) showIconPicker = true },
+                                color = markerColor.copy(alpha = 0.15f)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    AppIconView(icon = doc.icon, size = 20.dp, fontSize = 20.sp, tint = markerColor)
+                                }
+                            }
+
                             Spacer(modifier = Modifier.width(8.dp))
 
-                            // Clickable color circle for changing color marker
+                            Column(modifier = Modifier.weight(1f, fill = false)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = doc.title,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    if (isEditMode) {
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Icon(
+                                            Icons.Default.Edit,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(14.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                                Text(
+                                    text = if (isEditMode) stringResource(R.string.editing_mode) else stringResource(R.string.reading_mode),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (isEditMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            // Color Marker Dot
                             Box(
                                 modifier = Modifier
-                                    .size(20.dp)
+                                    .size(16.dp)
                                     .clip(CircleShape)
                                     .background(markerColor)
-                                    .border(1.5.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f), CircleShape)
-                                    .clickable { showColorPicker = true }
+                                    .clickable { if (isEditMode) showColorPicker = true }
                             )
                         }
                     },
                     actions = {
-                        // Toggle Read / Write mode
-                        FilterChip(
-                            selected = isEditMode,
-                            onClick = { viewModel.toggleEditMode() },
-                            label = { Text(if (isEditMode) "Правка" else "Чтение") },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = if (isEditMode) Icons.Default.Edit else Icons.Default.Visibility,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            },
-                            modifier = Modifier.padding(end = 4.dp)
-                        )
+                        // Search in document
+                        IconButton(onClick = { viewModel.toggleSearch() }) {
+                            Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search_in_document))
+                        }
 
-                        // Find button
-                        IconButton(onClick = { viewModel.toggleSearchVisible() }) {
+                        // Toggle Read/Edit mode
+                        IconButton(onClick = { viewModel.toggleEditMode() }) {
                             Icon(
-                                imageVector = if (isSearchVisible) Icons.Default.Close else Icons.Default.Search,
-                                contentDescription = "Поиск в заметке"
+                                imageVector = if (isEditMode) Icons.Default.MenuBook else Icons.Default.Edit,
+                                contentDescription = if (isEditMode) stringResource(R.string.reading_mode) else stringResource(R.string.editing_mode),
+                                tint = if (isEditMode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                             )
                         }
 
                         // Export dropdown
                         Box {
                             IconButton(onClick = { exportMenuExpanded = true }) {
-                                Icon(Icons.Default.FileDownload, contentDescription = "Экспорт")
+                                Icon(Icons.Default.Share, contentDescription = stringResource(R.string.export_title))
                             }
+
                             DropdownMenu(
                                 expanded = exportMenuExpanded,
                                 onDismissRequest = { exportMenuExpanded = false }
                             ) {
                                 DropdownMenuItem(
-                                    text = { Text("Экспорт в Markdown (.md)") },
+                                    text = { Text(stringResource(R.string.export_markdown)) },
                                     leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
                                     onClick = {
                                         exportMenuExpanded = false
@@ -254,7 +283,7 @@ fun EditorScreen(viewModel: NotesViewModel) {
                                     }
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Экспорт в Текст (.txt)") },
+                                    text = { Text(stringResource(R.string.export_plain_text)) },
                                     leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
                                     onClick = {
                                         exportMenuExpanded = false
@@ -283,13 +312,13 @@ fun EditorScreen(viewModel: NotesViewModel) {
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { viewModel.setEditorSearchQuery(it) },
-                            placeholder = { Text("Поиск в документе...") },
+                            placeholder = { Text(stringResource(R.string.search_in_document)) },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
                             trailingIcon = {
                                 if (searchQuery.isNotEmpty()) {
                                     Text(
-                                        text = "$matchCount найдено",
+                                        text = "$matchCount",
                                         style = MaterialTheme.typography.labelSmall,
                                         modifier = Modifier.padding(end = 8.dp)
                                     )
@@ -307,7 +336,7 @@ fun EditorScreen(viewModel: NotesViewModel) {
                     containerColor = markerColor,
                     contentColor = Color.White
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Добавить блок")
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_block))
                 }
             }
         }
@@ -341,7 +370,11 @@ fun EditorScreen(viewModel: NotesViewModel) {
                     },
                     onEditStatus = { showEditStatusDialog = true },
                     onAddTag = { showAddTagDialog = true },
-                    onRemoveTag = { tag -> viewModel.removeTagFromDocument(tag) }
+                    onRemoveTag = { tag -> viewModel.removeTagFromDocument(tag) },
+                    onTagClicked = { tag ->
+                        viewModel.setSelectedTag(tag)
+                        viewModel.navigateTo(AppScreen.TAGS)
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -363,7 +396,13 @@ fun EditorScreen(viewModel: NotesViewModel) {
                     onUpdateBlock = { updated -> viewModel.updateBlock(updated) },
                     onOpenContextMenu = { contextMenuBlock = block },
                     onMoveUp = { viewModel.moveBlockUp(block) },
-                    onMoveDown = { viewModel.moveBlockDown(block) }
+                    onMoveDown = { viewModel.moveBlockDown(block) },
+                    onInsertAfter = { type, indent ->
+                        viewModel.insertBlockAfter(block, type, "", indent)
+                    },
+                    onChangeIndent = { delta ->
+                        viewModel.changeBlockIndent(block, delta)
+                    }
                 )
             }
 
@@ -376,7 +415,7 @@ fun EditorScreen(viewModel: NotesViewModel) {
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            "Документ пуст. Нажмите '+' чтобы добавить первый блок.",
+                            stringResource(R.string.empty_document_hint),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -387,7 +426,7 @@ fun EditorScreen(viewModel: NotesViewModel) {
         }
     }
 
-    // Context Menu Dialog on Block Long Press
+    // Context Menu Dialog on Block Long Press (ONLY ACCESSIBLE IN EDIT MODE)
     contextMenuBlock?.let { block ->
         BlockContextMenuDialog(
             block = block,
@@ -411,7 +450,7 @@ fun EditorScreen(viewModel: NotesViewModel) {
         )
     }
 
-    // Add Block Dialog / Bottom Sheet
+    // Add Block Dialog
     if (showAddBlockSheet) {
         AddBlockDialog(
             onAdd = { type ->
@@ -425,9 +464,9 @@ fun EditorScreen(viewModel: NotesViewModel) {
     // Dialog: Edit Title
     if (showEditTitleDialog) {
         SimpleInputDialog(
-            title = "Изменить название заметки",
+            title = stringResource(R.string.edit_note_title),
             initialValue = doc.title,
-            label = "Название",
+            label = stringResource(R.string.note_title),
             onConfirm = { newTitle ->
                 viewModel.updateDocument(doc.copy(title = newTitle))
                 showEditTitleDialog = false
@@ -439,9 +478,9 @@ fun EditorScreen(viewModel: NotesViewModel) {
     // Dialog: Edit Status
     if (showEditStatusDialog) {
         SimpleInputDialog(
-            title = "Тег статуса",
+            title = stringResource(R.string.status_tag),
             initialValue = doc.statusTag,
-            label = "Статус (например, 'В работе', 'Готово', 'Черновик')",
+            label = stringResource(R.string.status_tag_hint),
             onConfirm = { newStatus ->
                 viewModel.updateDocumentStatusTag(newStatus)
                 showEditStatusDialog = false
@@ -453,9 +492,9 @@ fun EditorScreen(viewModel: NotesViewModel) {
     // Dialog: Add Tag
     if (showAddTagDialog) {
         SimpleInputDialog(
-            title = "Добавить тег",
+            title = stringResource(R.string.add_tag_title),
             initialValue = "",
-            label = "Название тега",
+            label = stringResource(R.string.tag_name_label),
             onConfirm = { newTag ->
                 viewModel.addTagToDocument(newTag)
                 showAddTagDialog = false
@@ -464,24 +503,24 @@ fun EditorScreen(viewModel: NotesViewModel) {
         )
     }
 
-    // Dialog: Color Picker
+    // Color Picker Dialog
     if (showColorPicker) {
         ColorPickerDialog(
             currentColorHex = doc.colorHex,
-            onColorSelected = { hex ->
-                viewModel.updateDocumentColor(hex)
+            onColorSelected = { newHex ->
+                viewModel.updateDocumentColor(newHex)
                 showColorPicker = false
             },
             onDismiss = { showColorPicker = false }
         )
     }
 
-    // Dialog: Icon Picker
+    // Icon Picker Dialog
     if (showIconPicker) {
         IconPickerDialog(
             currentIcon = doc.icon,
-            onIconSelected = { icon ->
-                viewModel.updateDocumentIcon(icon)
+            onIconSelected = { newIcon ->
+                viewModel.updateDocumentIcon(newIcon)
                 showIconPicker = false
             },
             onDismiss = { showIconPicker = false }
@@ -489,7 +528,7 @@ fun EditorScreen(viewModel: NotesViewModel) {
     }
 }
 
-// METADATA DISPLAY IN TABLE FORMAT
+// DOCUMENT METADATA TABLE COMPONENT
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun DocumentMetadataTable(
@@ -501,40 +540,47 @@ fun DocumentMetadataTable(
     onClearCalendarDate: () -> Unit,
     onEditStatus: () -> Unit,
     onAddTag: () -> Unit,
-    onRemoveTag: (String) -> Unit
+    onRemoveTag: (String) -> Unit,
+    onTagClicked: (String) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
-        ),
-        shape = RoundedCornerShape(14.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+        )
     ) {
-        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                "Метаданные",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold
-            )
-
-            // Table Grid Rows
-            // Row 1: Created & Updated
-            Row(modifier = Modifier.fillMaxWidth()) {
-                MetadataCell(label = "Создано", value = formatDate(document.createdAt), modifier = Modifier.weight(1f))
-                Spacer(modifier = Modifier.width(8.dp))
-                MetadataCell(label = "Изменено", value = formatDate(document.updatedAt), modifier = Modifier.weight(1f))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Row 1: Creation & Modification dates
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                MetadataCell(
+                    label = stringResource(R.string.created_label),
+                    value = formatDate(document.createdAt),
+                    modifier = Modifier.weight(1f)
+                )
+                MetadataCell(
+                    label = stringResource(R.string.updated_label),
+                    value = formatDate(document.updatedAt),
+                    modifier = Modifier.weight(1f)
+                )
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
-            // Row 2: Calendar Date
+            // Row 2: Calendar Date - CANNOT BE MODIFIED/CLEARED IN READ MODE
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .clickable { onPickCalendarDate() }
+                    .clickable(enabled = isEditMode) { onPickCalendarDate() }
                     .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -546,24 +592,26 @@ fun DocumentMetadataTable(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    "Дата в календаре:",
+                    stringResource(R.string.calendar_date_label),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = if (document.calendarDate != null) formatDate(document.calendarDate) else "Не указана (нажмите для выбора)",
+                    text = if (document.calendarDate != null) formatDate(document.calendarDate) else if (isEditMode) stringResource(R.string.not_set_click_to_pick) else stringResource(R.string.not_set),
                     style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Medium,
                     color = if (document.calendarDate != null) markerColor else MaterialTheme.colorScheme.primary
                 )
-                if (document.calendarDate != null) {
+
+                // Date clearing button only shown in EDIT mode
+                if (document.calendarDate != null && isEditMode) {
                     Spacer(modifier = Modifier.weight(1f))
                     IconButton(
                         onClick = onClearCalendarDate,
                         modifier = Modifier.size(24.dp)
                     ) {
-                        Icon(Icons.Default.Close, contentDescription = "Очистить дату", modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.Close, contentDescription = stringResource(R.string.clear_date), modifier = Modifier.size(16.dp))
                     }
                 }
             }
@@ -575,12 +623,12 @@ fun DocumentMetadataTable(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .clickable { onEditStatus() }
+                    .clickable(enabled = isEditMode) { onEditStatus() }
                     .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "Статус:",
+                    stringResource(R.string.status_label),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -591,15 +639,22 @@ fun DocumentMetadataTable(
                     border = androidx.compose.foundation.BorderStroke(1.dp, markerColor.copy(alpha = 0.4f))
                 ) {
                     Text(
-                        text = if (document.statusTag.isNotBlank()) document.statusTag else "Указать статус",
+                        text = if (document.statusTag.isNotBlank()) document.statusTag else if (isEditMode) stringResource(R.string.set_status) else "—",
                         style = MaterialTheme.typography.labelSmall,
                         color = markerColor,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(6.dp))
-                Icon(Icons.Default.Edit, contentDescription = "Изменить статус", modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (isEditMode) {
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = stringResource(R.string.edit_status),
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
@@ -611,22 +666,24 @@ fun DocumentMetadataTable(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        "Общие теги:",
+                        stringResource(R.string.general_tags_label),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.weight(1f))
-                    TextButton(onClick = onAddTag, modifier = Modifier.height(28.dp)) {
-                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(14.dp))
-                        Spacer(modifier = Modifier.width(2.dp))
-                        Text("Добавить", fontSize = 11.sp)
+                    if (isEditMode) {
+                        Spacer(modifier = Modifier.weight(1f))
+                        TextButton(onClick = onAddTag, modifier = Modifier.height(28.dp)) {
+                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(2.dp))
+                            Text(stringResource(R.string.add), fontSize = 11.sp)
+                        }
                     }
                 }
 
                 val tags = document.tagsCsv.split(",").map { it.trim() }.filter { it.isNotEmpty() }
                 if (tags.isEmpty()) {
                     Text(
-                        "Теги отсутствуют",
+                        stringResource(R.string.no_tags),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -637,11 +694,24 @@ fun DocumentMetadataTable(
                     ) {
                         tags.forEach { tag ->
                             AssistChip(
-                                onClick = { onRemoveTag(tag) },
+                                onClick = {
+                                    if (isEditMode) {
+                                        onRemoveTag(tag)
+                                    } else {
+                                        // Navigate to Tags screen with filter
+                                        onTagClicked(tag)
+                                    }
+                                },
                                 label = { Text("#$tag", fontSize = 12.sp) },
-                                trailingIcon = {
-                                    Icon(Icons.Default.Close, contentDescription = "Удалить тег", modifier = Modifier.size(12.dp))
-                                }
+                                trailingIcon = if (isEditMode) {
+                                    {
+                                        Icon(
+                                            Icons.Default.Close,
+                                            contentDescription = stringResource(R.string.delete_tag),
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                    }
+                                } else null
                             )
                         }
                     }
@@ -659,6 +729,121 @@ fun MetadataCell(label: String, value: String, modifier: Modifier = Modifier) {
     }
 }
 
+// STABLE TEXT FIELD WITH LOCAL SELECTION AND RICH TEXT FORMATTING
+@Composable
+fun RichBlockTextField(
+    initialText: String,
+    onTextChanged: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    placeholder: String = "",
+    textStyle: TextStyle = LocalTextStyle.current,
+    singleLine: Boolean = false,
+    onEnterOrNext: (() -> Unit)? = null
+) {
+    var textFieldValue by remember {
+        mutableStateOf(TextFieldValue(text = initialText, selection = TextRange(initialText.length)))
+    }
+    var isFocused by remember { mutableStateOf(false) }
+
+    // Sync only if external text really changed from elsewhere
+    LaunchedEffect(initialText) {
+        if (initialText != textFieldValue.text) {
+            val newSel = if (textFieldValue.selection.end <= initialText.length) {
+                textFieldValue.selection
+            } else {
+                TextRange(initialText.length)
+            }
+            textFieldValue = textFieldValue.copy(text = initialText, selection = newSel)
+        }
+    }
+
+    Column(modifier = modifier) {
+        // Rich text formatting toolbar when focused
+        if (isFocused) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(bottom = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    onClick = {
+                        val updated = RichTextHelper.toggleTag(textFieldValue, "**")
+                        textFieldValue = updated
+                        onTextChanged(updated.text)
+                    },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(Icons.Default.FormatBold, contentDescription = "Bold", modifier = Modifier.size(16.dp))
+                }
+                IconButton(
+                    onClick = {
+                        val updated = RichTextHelper.toggleTag(textFieldValue, "*")
+                        textFieldValue = updated
+                        onTextChanged(updated.text)
+                    },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(Icons.Default.FormatItalic, contentDescription = "Italic", modifier = Modifier.size(16.dp))
+                }
+                IconButton(
+                    onClick = {
+                        val updated = RichTextHelper.toggleTag(textFieldValue, "~~")
+                        textFieldValue = updated
+                        onTextChanged(updated.text)
+                    },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(Icons.Default.FormatStrikethrough, contentDescription = "Strike", modifier = Modifier.size(16.dp))
+                }
+                IconButton(
+                    onClick = {
+                        val updated = RichTextHelper.toggleUnderline(textFieldValue)
+                        textFieldValue = updated
+                        onTextChanged(updated.text)
+                    },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(Icons.Default.FormatUnderlined, contentDescription = "Underline", modifier = Modifier.size(16.dp))
+                }
+                IconButton(
+                    onClick = {
+                        val updated = RichTextHelper.toggleTag(textFieldValue, "`")
+                        textFieldValue = updated
+                        onTextChanged(updated.text)
+                    },
+                    modifier = Modifier.size(28.dp)
+                ) {
+                    Icon(Icons.Default.Code, contentDescription = "Code", modifier = Modifier.size(16.dp))
+                }
+            }
+        }
+
+        OutlinedTextField(
+            value = textFieldValue,
+            onValueChange = { newValue ->
+                textFieldValue = newValue
+                onTextChanged(newValue.text)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .onFocusChanged { isFocused = it.isFocused },
+            placeholder = { Text(placeholder) },
+            textStyle = textStyle,
+            singleLine = singleLine,
+            keyboardOptions = KeyboardOptions(
+                imeAction = if (onEnterOrNext != null) ImeAction.Next else ImeAction.Default
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { onEnterOrNext?.invoke() },
+                onDone = { onEnterOrNext?.invoke() }
+            )
+        )
+    }
+}
+
 // BLOCK ITEM VIEW (READ & WRITE MODES)
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -669,19 +854,30 @@ fun BlockItemView(
     onUpdateBlock: (BlockEntity) -> Unit,
     onOpenContextMenu: () -> Unit,
     onMoveUp: () -> Unit,
-    onMoveDown: () -> Unit
+    onMoveDown: () -> Unit,
+    onInsertAfter: (BlockType, Int) -> Unit,
+    onChangeIndent: (Int) -> Unit
 ) {
     val highlightBorder = if (isSearchMatch) {
         androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
     } else null
 
-    Card(
-        modifier = Modifier
+    // Card modifier: long click ONLY active in edit mode!
+    val cardModifier = if (isEditMode) {
+        Modifier
             .fillMaxWidth()
             .combinedClickable(
                 onClick = { /* normal click */ },
                 onLongClick = { onOpenContextMenu() }
-            ),
+            )
+    } else {
+        Modifier.fillMaxWidth()
+    }
+
+    val indentPadding = (block.indentLevel * 20).dp
+
+    Card(
+        modifier = cardModifier.padding(start = indentPadding),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSearchMatch) {
@@ -711,7 +907,7 @@ fun BlockItemView(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             Icons.Default.DragHandle,
-                            contentDescription = "Переместить",
+                            contentDescription = stringResource(R.string.move_item),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(18.dp)
                         )
@@ -723,15 +919,33 @@ fun BlockItemView(
                         )
                     }
 
-                    Row {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Indent controls for list blocks
+                        if (block.type == BlockType.BULLETED_LIST || block.type == BlockType.NUMBERED_LIST || block.type == BlockType.TODO) {
+                            IconButton(
+                                onClick = { onChangeIndent(-1) },
+                                enabled = block.indentLevel > 0,
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(Icons.AutoMirrored.Filled.FormatIndentDecrease, contentDescription = stringResource(R.string.decrease_indent), modifier = Modifier.size(16.dp))
+                            }
+                            IconButton(
+                                onClick = { onChangeIndent(1) },
+                                enabled = block.indentLevel < 3,
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(Icons.AutoMirrored.Filled.FormatIndentIncrease, contentDescription = stringResource(R.string.increase_indent), modifier = Modifier.size(16.dp))
+                            }
+                        }
+
                         IconButton(onClick = onMoveUp, modifier = Modifier.size(28.dp)) {
-                            Icon(Icons.Default.ArrowUpward, contentDescription = "Вверх", modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.ArrowUpward, contentDescription = stringResource(R.string.move_up), modifier = Modifier.size(16.dp))
                         }
                         IconButton(onClick = onMoveDown, modifier = Modifier.size(28.dp)) {
-                            Icon(Icons.Default.ArrowDownward, contentDescription = "Вниз", modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.ArrowDownward, contentDescription = stringResource(R.string.move_down), modifier = Modifier.size(16.dp))
                         }
                         IconButton(onClick = onOpenContextMenu, modifier = Modifier.size(28.dp)) {
-                            Icon(Icons.Default.MoreVert, contentDescription = "Меню блока", modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.block_actions), modifier = Modifier.size(16.dp))
                         }
                     }
                 }
@@ -741,15 +955,14 @@ fun BlockItemView(
             when (block.type) {
                 BlockType.PARAGRAPH -> {
                     if (isEditMode) {
-                        OutlinedTextField(
-                            value = block.content,
-                            onValueChange = { onUpdateBlock(block.copy(content = it)) },
-                            placeholder = { Text("Введите текст параграфа...") },
-                            modifier = Modifier.fillMaxWidth()
+                        RichBlockTextField(
+                            initialText = block.content,
+                            onTextChanged = { onUpdateBlock(block.copy(content = it)) },
+                            placeholder = stringResource(R.string.paragraph_hint)
                         )
                     } else {
                         Text(
-                            text = block.content.ifBlank { " " },
+                            text = RichTextHelper.parseRichText(block.content.ifBlank { " " }, MaterialTheme.colorScheme.primary),
                             style = MaterialTheme.typography.bodyLarge,
                             lineHeight = 24.sp
                         )
@@ -758,16 +971,16 @@ fun BlockItemView(
 
                 BlockType.HEADING_1 -> {
                     if (isEditMode) {
-                        OutlinedTextField(
-                            value = block.content,
-                            onValueChange = { onUpdateBlock(block.copy(content = it)) },
-                            placeholder = { Text("Заголовок H1...") },
+                        RichBlockTextField(
+                            initialText = block.content,
+                            onTextChanged = { onUpdateBlock(block.copy(content = it)) },
+                            placeholder = stringResource(R.string.heading1_hint),
                             textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                            modifier = Modifier.fillMaxWidth()
+                            singleLine = true
                         )
                     } else {
                         Text(
-                            text = block.content,
+                            text = RichTextHelper.parseRichText(block.content, MaterialTheme.colorScheme.primary),
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
@@ -777,16 +990,16 @@ fun BlockItemView(
 
                 BlockType.HEADING_2 -> {
                     if (isEditMode) {
-                        OutlinedTextField(
-                            value = block.content,
-                            onValueChange = { onUpdateBlock(block.copy(content = it)) },
-                            placeholder = { Text("Заголовок H2...") },
+                        RichBlockTextField(
+                            initialText = block.content,
+                            onTextChanged = { onUpdateBlock(block.copy(content = it)) },
+                            placeholder = stringResource(R.string.heading2_hint),
                             textStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
-                            modifier = Modifier.fillMaxWidth()
+                            singleLine = true
                         )
                     } else {
                         Text(
-                            text = block.content,
+                            text = RichTextHelper.parseRichText(block.content, MaterialTheme.colorScheme.primary),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             modifier = Modifier.padding(top = 6.dp, bottom = 2.dp)
@@ -796,19 +1009,19 @@ fun BlockItemView(
 
                 BlockType.HEADING_3 -> {
                     if (isEditMode) {
-                        OutlinedTextField(
-                            value = block.content,
-                            onValueChange = { onUpdateBlock(block.copy(content = it)) },
-                            placeholder = { Text("Заголовок H3...") },
+                        RichBlockTextField(
+                            initialText = block.content,
+                            onTextChanged = { onUpdateBlock(block.copy(content = it)) },
+                            placeholder = stringResource(R.string.heading3_hint),
                             textStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-                            modifier = Modifier.fillMaxWidth()
+                            singleLine = true
                         )
                     } else {
                         Text(
-                            text = block.content,
+                            text = RichTextHelper.parseRichText(block.content, MaterialTheme.colorScheme.primary),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(top = 4.dp)
+                            modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
                         )
                     }
                 }
@@ -816,74 +1029,154 @@ fun BlockItemView(
                 BlockType.DIVIDER -> {
                     HorizontalDivider(
                         modifier = Modifier.padding(vertical = 8.dp),
-                        thickness = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        thickness = 1.dp
                     )
                 }
 
                 BlockType.BULLETED_LIST -> {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("• ", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                        if (isEditMode) {
-                            OutlinedTextField(
-                                value = block.content,
-                                onValueChange = { onUpdateBlock(block.copy(content = it)) },
-                                placeholder = { Text("Элемент списка...") },
-                                modifier = Modifier.weight(1f)
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "•",
+                                fontSize = 20.sp,
+                                modifier = Modifier.padding(horizontal = 8.dp),
+                                color = MaterialTheme.colorScheme.primary
                             )
-                        } else {
-                            Text(text = block.content, style = MaterialTheme.typography.bodyMedium)
+                            if (isEditMode) {
+                                RichBlockTextField(
+                                    initialText = block.content,
+                                    onTextChanged = { onUpdateBlock(block.copy(content = it)) },
+                                    placeholder = stringResource(R.string.list_item_hint),
+                                    modifier = Modifier.weight(1f),
+                                    onEnterOrNext = { onInsertAfter(BlockType.BULLETED_LIST, block.indentLevel) }
+                                )
+                            } else {
+                                Text(
+                                    text = RichTextHelper.parseRichText(block.content, MaterialTheme.colorScheme.primary),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+
+                        if (isEditMode) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 28.dp, top = 2.dp),
+                                horizontalArrangement = Arrangement.Start
+                            ) {
+                                TextButton(
+                                    onClick = { onInsertAfter(BlockType.BULLETED_LIST, block.indentLevel) },
+                                    modifier = Modifier.height(28.dp)
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(12.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(stringResource(R.string.next_item), fontSize = 11.sp)
+                                }
+                            }
                         }
                     }
                 }
 
                 BlockType.NUMBERED_LIST -> {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("${block.orderIndex + 1}. ", fontWeight = FontWeight.Bold)
-                        if (isEditMode) {
-                            OutlinedTextField(
-                                value = block.content,
-                                onValueChange = { onUpdateBlock(block.copy(content = it)) },
-                                placeholder = { Text("Элемент списка...") },
-                                modifier = Modifier.weight(1f)
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "${block.orderIndex + 1}.",
+                                fontWeight = FontWeight.Bold,
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(horizontal = 6.dp),
+                                color = MaterialTheme.colorScheme.primary
                             )
-                        } else {
-                            Text(text = block.content, style = MaterialTheme.typography.bodyMedium)
+                            if (isEditMode) {
+                                RichBlockTextField(
+                                    initialText = block.content,
+                                    onTextChanged = { onUpdateBlock(block.copy(content = it)) },
+                                    placeholder = stringResource(R.string.list_item_hint),
+                                    modifier = Modifier.weight(1f),
+                                    onEnterOrNext = { onInsertAfter(BlockType.NUMBERED_LIST, block.indentLevel) }
+                                )
+                            } else {
+                                Text(
+                                    text = RichTextHelper.parseRichText(block.content, MaterialTheme.colorScheme.primary),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+
+                        if (isEditMode) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 28.dp, top = 2.dp),
+                                horizontalArrangement = Arrangement.Start
+                            ) {
+                                TextButton(
+                                    onClick = { onInsertAfter(BlockType.NUMBERED_LIST, block.indentLevel) },
+                                    modifier = Modifier.height(28.dp)
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(12.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(stringResource(R.string.next_item), fontSize = 11.sp)
+                                }
+                            }
                         }
                     }
                 }
 
                 BlockType.TODO -> {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(
-                            checked = block.isChecked,
-                            onCheckedChange = { checked ->
-                                onUpdateBlock(block.copy(isChecked = checked))
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = block.isChecked,
+                                onCheckedChange = { checked ->
+                                    onUpdateBlock(block.copy(isChecked = checked))
+                                }
+                            )
+                            if (isEditMode) {
+                                RichBlockTextField(
+                                    initialText = block.content,
+                                    onTextChanged = { onUpdateBlock(block.copy(content = it)) },
+                                    placeholder = stringResource(R.string.todo_item_hint),
+                                    modifier = Modifier.weight(1f),
+                                    onEnterOrNext = { onInsertAfter(BlockType.TODO, block.indentLevel) }
+                                )
+                            } else {
+                                Text(
+                                    text = RichTextHelper.parseRichText(block.content, MaterialTheme.colorScheme.primary),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    textDecoration = if (block.isChecked) TextDecoration.LineThrough else null,
+                                    color = if (block.isChecked) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+                                )
                             }
-                        )
+                        }
+
                         if (isEditMode) {
-                            OutlinedTextField(
-                                value = block.content,
-                                onValueChange = { onUpdateBlock(block.copy(content = it)) },
-                                placeholder = { Text("Текст задачи...") },
-                                modifier = Modifier.weight(1f)
-                            )
-                        } else {
-                            Text(
-                                text = block.content,
-                                style = MaterialTheme.typography.bodyMedium,
-                                textDecoration = if (block.isChecked) TextDecoration.LineThrough else null,
-                                color = if (block.isChecked) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
-                            )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 36.dp, top = 2.dp),
+                                horizontalArrangement = Arrangement.Start
+                            ) {
+                                TextButton(
+                                    onClick = { onInsertAfter(BlockType.TODO, block.indentLevel) },
+                                    modifier = Modifier.height(28.dp)
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(12.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(stringResource(R.string.next_todo), fontSize = 11.sp)
+                                }
+                            }
                         }
                     }
                 }
@@ -902,17 +1195,18 @@ fun BlockItemView(
     }
 }
 
+@Composable
 fun getBlockTypeLabel(type: BlockType): String {
     return when (type) {
-        BlockType.PARAGRAPH -> "Параграф"
-        BlockType.HEADING_1 -> "Заголовок 1"
-        BlockType.HEADING_2 -> "Заголовок 2"
-        BlockType.HEADING_3 -> "Заголовок 3"
-        BlockType.DIVIDER -> "Разделитель"
-        BlockType.BULLETED_LIST -> "Маркированный список"
-        BlockType.NUMBERED_LIST -> "Нумерованный список"
-        BlockType.TODO -> "Задача (Todo)"
-        BlockType.TABLE -> "Таблица"
+        BlockType.PARAGRAPH -> stringResource(R.string.block_paragraph)
+        BlockType.HEADING_1 -> stringResource(R.string.block_heading1)
+        BlockType.HEADING_2 -> stringResource(R.string.block_heading2)
+        BlockType.HEADING_3 -> stringResource(R.string.block_heading3)
+        BlockType.DIVIDER -> stringResource(R.string.block_divider)
+        BlockType.BULLETED_LIST -> stringResource(R.string.block_bullet_list)
+        BlockType.NUMBERED_LIST -> stringResource(R.string.block_number_list)
+        BlockType.TODO -> stringResource(R.string.block_todo)
+        BlockType.TABLE -> stringResource(R.string.block_table)
     }
 }
 
@@ -945,7 +1239,7 @@ fun TableBlockView(
                     },
                     modifier = Modifier.height(32.dp)
                 ) {
-                    Text("+ Строка", fontSize = 11.sp)
+                    Text(stringResource(R.string.add_row), fontSize = 11.sp)
                 }
 
                 OutlinedButton(
@@ -958,7 +1252,7 @@ fun TableBlockView(
                     enabled = table.size > 1,
                     modifier = Modifier.height(32.dp)
                 ) {
-                    Text("- Строка", fontSize = 11.sp)
+                    Text(stringResource(R.string.remove_row), fontSize = 11.sp)
                 }
 
                 OutlinedButton(
@@ -968,7 +1262,7 @@ fun TableBlockView(
                     },
                     modifier = Modifier.height(32.dp)
                 ) {
-                    Text("+ Колонка", fontSize = 11.sp)
+                    Text(stringResource(R.string.add_col), fontSize = 11.sp)
                 }
 
                 OutlinedButton(
@@ -982,7 +1276,7 @@ fun TableBlockView(
                     enabled = (table.firstOrNull()?.size ?: 0) > 1,
                     modifier = Modifier.height(32.dp)
                 ) {
-                    Text("- Колонка", fontSize = 11.sp)
+                    Text(stringResource(R.string.remove_col), fontSize = 11.sp)
                 }
             }
         }
@@ -1034,7 +1328,7 @@ fun TableBlockView(
                                     )
                                 } else {
                                     Text(
-                                        text = cellValue.ifBlank { "—" },
+                                        text = RichTextHelper.parseRichText(cellValue.ifBlank { "—" }, MaterialTheme.colorScheme.primary),
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = if (isHeader) FontWeight.Bold else FontWeight.Normal,
                                         color = if (isHeader) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
@@ -1061,33 +1355,33 @@ fun BlockContextMenuDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Действия с блоком") },
+        title = { Text(stringResource(R.string.block_actions)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
-                    text = "Тип: ${getBlockTypeLabel(block.type)}",
+                    text = "${stringResource(R.string.block_type_prefix)} ${getBlockTypeLabel(block.type)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
                 DropdownMenuItem(
-                    text = { Text("Дублировать") },
+                    text = { Text(stringResource(R.string.duplicate)) },
                     leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) },
                     onClick = onDuplicate
                 )
                 DropdownMenuItem(
-                    text = { Text("Переместить вверх") },
+                    text = { Text(stringResource(R.string.move_up)) },
                     leadingIcon = { Icon(Icons.Default.ArrowUpward, contentDescription = null) },
                     onClick = onMoveUp
                 )
                 DropdownMenuItem(
-                    text = { Text("Переместить вниз") },
+                    text = { Text(stringResource(R.string.move_down)) },
                     leadingIcon = { Icon(Icons.Default.ArrowDownward, contentDescription = null) },
                     onClick = onMoveDown
                 )
                 DropdownMenuItem(
-                    text = { Text("Удалить", color = MaterialTheme.colorScheme.error) },
+                    text = { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) },
                     leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
                     onClick = onDelete
                 )
@@ -1095,7 +1389,7 @@ fun BlockContextMenuDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Закрыть")
+                Text(stringResource(R.string.close))
             }
         }
     )
@@ -1109,78 +1403,78 @@ fun AddBlockDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Добавить блок") },
+        title = { Text(stringResource(R.string.add_block)) },
         text = {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 item {
                     AddBlockOption(
                         icon = Icons.Default.Edit,
-                        title = "Параграф",
-                        subtitle = "Обычный текст",
+                        title = stringResource(R.string.block_paragraph),
+                        subtitle = stringResource(R.string.block_paragraph_desc),
                         onClick = { onAdd(BlockType.PARAGRAPH) }
                     )
                 }
                 item {
                     AddBlockOption(
                         icon = Icons.Default.Title,
-                        title = "Заголовок 1 (H1)",
-                        subtitle = "Крупный заголовок раздела",
+                        title = stringResource(R.string.block_heading1),
+                        subtitle = stringResource(R.string.block_heading1_desc),
                         onClick = { onAdd(BlockType.HEADING_1) }
                     )
                 }
                 item {
                     AddBlockOption(
                         icon = Icons.Default.Title,
-                        title = "Заголовок 2 (H2)",
-                        subtitle = "Средний подзаголовок",
+                        title = stringResource(R.string.block_heading2),
+                        subtitle = stringResource(R.string.block_heading2_desc),
                         onClick = { onAdd(BlockType.HEADING_2) }
                     )
                 }
                 item {
                     AddBlockOption(
                         icon = Icons.Default.Title,
-                        title = "Заголовок 3 (H3)",
-                        subtitle = "Малый заголовок",
+                        title = stringResource(R.string.block_heading3),
+                        subtitle = stringResource(R.string.block_heading3_desc),
                         onClick = { onAdd(BlockType.HEADING_3) }
                     )
                 }
                 item {
                     AddBlockOption(
                         icon = Icons.Default.FormatListBulleted,
-                        title = "Маркированный список",
-                        subtitle = "Список с точками",
+                        title = stringResource(R.string.block_bullet_list),
+                        subtitle = stringResource(R.string.block_bullet_list_desc),
                         onClick = { onAdd(BlockType.BULLETED_LIST) }
                     )
                 }
                 item {
                     AddBlockOption(
                         icon = Icons.Default.FormatListNumbered,
-                        title = "Нумерованный список",
-                        subtitle = "Список с номерами 1, 2, 3...",
+                        title = stringResource(R.string.block_number_list),
+                        subtitle = stringResource(R.string.block_number_list_desc),
                         onClick = { onAdd(BlockType.NUMBERED_LIST) }
                     )
                 }
                 item {
                     AddBlockOption(
                         icon = Icons.Default.Check,
-                        title = "Задача (Todo)",
-                        subtitle = "Список задач с чекбоксами",
+                        title = stringResource(R.string.block_todo),
+                        subtitle = stringResource(R.string.block_todo_desc),
                         onClick = { onAdd(BlockType.TODO) }
                     )
                 }
                 item {
                     AddBlockOption(
                         icon = Icons.Default.TableChart,
-                        title = "Таблица",
-                        subtitle = "Табличные строки и столбцы",
+                        title = stringResource(R.string.block_table),
+                        subtitle = stringResource(R.string.block_table_desc),
                         onClick = { onAdd(BlockType.TABLE) }
                     )
                 }
                 item {
                     AddBlockOption(
                         icon = Icons.Default.HorizontalRule,
-                        title = "Разделитель",
-                        subtitle = "Горизонтальная линия",
+                        title = stringResource(R.string.block_divider),
+                        subtitle = stringResource(R.string.block_divider_desc),
                         onClick = { onAdd(BlockType.DIVIDER) }
                     )
                 }
@@ -1188,7 +1482,7 @@ fun AddBlockDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text(stringResource(R.string.cancel))
             }
         }
     )
@@ -1224,14 +1518,12 @@ fun AddBlockOption(
 }
 
 fun copyAndShare(context: Context, fileName: String, content: String) {
-    // Copy to clipboard
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     val clip = ClipData.newPlainText(fileName, content)
     clipboard.setPrimaryClip(clip)
 
     Toast.makeText(context, "Скопировано в буфер обмена!", Toast.LENGTH_SHORT).show()
 
-    // Trigger Android share sheet
     try {
         val sendIntent = Intent().apply {
             action = Intent.ACTION_SEND
@@ -1242,6 +1534,6 @@ fun copyAndShare(context: Context, fileName: String, content: String) {
         val shareIntent = Intent.createChooser(sendIntent, "Экспортировать $fileName")
         context.startActivity(shareIntent)
     } catch (e: Exception) {
-        // Share sheet could fail in headless or unsupported sandbox, clipboard copy is already safe
+        // clipboard copy is already safe
     }
 }

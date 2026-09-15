@@ -1,3 +1,243 @@
 <resources>
     <string name="app_name">Заметки</string>
+
+    <!-- Navigation -->
+    <string name="nav_workspaces">Workspaces</string>
+    <string name="nav_files">Files</string>
+    <string name="nav_editor">Editor</string>
+    <string name="nav_calendar">Calendar</string>
+    <string name="nav_tags">Tags</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Workspaces -->
+    <string name="workspaces_title">Workspaces</string>
+    <string name="workspaces_subtitle">Manage workspaces</string>
+    <string name="workspaces_desc">Files, calendar, and tags are displayed within the context of the active workspace.</string>
+    <string name="workspace_active">Active</string>
+    <string name="create_workspace">New Workspace</string>
+    <string name="rename_workspace">Rename Workspace</string>
+    <string name="clone_workspace">Clone Workspace</string>
+    <string name="delete_workspace">Delete Workspace</string>
+    <string name="delete_workspace_prompt">Delete Workspace</string>
+    <string name="delete_workspace_confirm_prefix">Are you sure you want to delete</string>
+    <string name="delete_workspace_confirm_suffix">All files, folders, and blocks will be permanently deleted.</string>
+    <string name="delete_workspace_confirm">Are you sure you want to delete \'%1$s\'? All folders, documents, and blocks will be permanently deleted.</string>
+    <string name="cannot_delete">Cannot Delete</string>
+    <string name="cannot_delete_workspace">Cannot Delete</string>
+    <string name="cannot_delete_workspace_msg">The app must have at least one workspace.</string>
+    <string name="workspace_name">Workspace Name</string>
+    <string name="new_workspace">New Workspace</string>
+    <string name="select_as_active">Set as active</string>
+    <string name="workspace_copy_suffix">%1$s (Copy)</string>
+    <string name="copy_name">Copy Name</string>
+    <string name="copy_suffix">Copy</string>
+    <string name="rename">Rename</string>
+    <string name="clone">Clone</string>
+    <string name="new_name">New name</string>
+    <string name="active">Active</string>
+    <string name="actions">Actions</string>
+
+    <!-- Files -->
+    <string name="files_title">Files</string>
+    <string name="files_subtitle">Folder and document tree</string>
+    <string name="search_files_placeholder">Search files and folders…</string>
+    <string name="new_note">Note</string>
+    <string name="new_folder">Folder</string>
+    <string name="files_empty_title">This workspace is empty</string>
+    <string name="files_empty_subtitle">Create a folder or add your first note</string>
+    <string name="root_files">Files without folder</string>
+    <string name="new_note_in_folder">New note in this folder</string>
+    <string name="new_subfolder">New subfolder</string>
+    <string name="edit_folder">Edit Folder</string>
+    <string name="delete_folder">Delete Folder</string>
+    <string name="delete_folder_confirm">Are you sure you want to delete folder \'%1$s\'? All nested files and subfolders will be deleted.</string>
+    <string name="delete_doc">Delete Note</string>
+    <string name="delete_doc_confirm">Are you sure you want to delete \'%1$s\'?</string>
+    <string name="folder_name">Folder Name</string>
+    <string name="note_title">Note Title</string>
+    <string name="move_item">Move to folder…</string>
+    <string name="move_to_root">Root (No Folder)</string>
+    <string name="open_in_editor">Open in editor</string>
+
+    <!-- Editor -->
+    <string name="editor_title">Editor</string>
+    <string name="no_doc_selected">No document selected</string>
+    <string name="go_to_files">Go to files</string>
+    <string name="mode_read">Read</string>
+    <string name="mode_write">Edit</string>
+    <string name="reading_mode">Reading</string>
+    <string name="editing_mode">Editing</string>
+    <string name="back">Back</string>
+    <string name="select_note_prompt">Select a note in the files list or create a new one</string>
+    <string name="search_in_doc">Search in note…</string>
+    <string name="search_in_document">Search in note</string>
+    <string name="found_matches">%1$d found</string>
+    <string name="export">Export</string>
+    <string name="export_title">Export Document</string>
+    <string name="export_markdown">Export as Markdown (.md)</string>
+    <string name="export_plain_text">Export as Plain Text (.txt)</string>
+    <string name="export_text">Export as Plain Text (.txt)</string>
+    <string name="copied_to_clipboard">Copied to clipboard!</string>
+    <string name="metadata_title">Metadata</string>
+    <string name="created_date">Created</string>
+    <string name="created_label">Created</string>
+    <string name="updated_date">Updated</string>
+    <string name="updated_label">Updated</string>
+    <string name="calendar_date">Calendar date:</string>
+    <string name="calendar_date_label">Calendar date</string>
+    <string name="calendar_date_not_set">Not set (tap to choose)</string>
+    <string name="not_set_click_to_pick">Not set (click to pick)</string>
+    <string name="not_set">Not set</string>
+    <string name="calendar_date_none">None</string>
+    <string name="clear_date">Clear date</string>
+    <string name="status_label">Status:</string>
+    <string name="status_tag">Status tag</string>
+    <string name="status_tag_hint">Enter status (e.g. In progress, Done)</string>
+    <string name="status_placeholder">Set status</string>
+    <string name="set_status">Set status</string>
+    <string name="edit_status">Edit status</string>
+    <string name="status_dialog_title">Status Tag</string>
+    <string name="status_dialog_label">Status (e.g., In Progress, Done, Draft)</string>
+    <string name="general_tags">Tags:</string>
+    <string name="general_tags_label">General tags</string>
+    <string name="no_tags">No tags</string>
+    <string name="add_tag">Add tag</string>
+    <string name="add_tag_title">Add Tag</string>
+    <string name="tag_name_label">Tag name</string>
+    <string name="delete_tag">Delete tag</string>
+    <string name="edit_note_title">Edit Note Title</string>
+    <string name="doc_empty_hint">Document is empty. Tap \'+\' to add the first block.</string>
+    <string name="empty_document_hint">Document is empty. Tap \'+\' to add the first block.</string>
+    <string name="add_block">Add Block</string>
+
+    <!-- Block types & actions -->
+    <string name="block_actions">Block Actions</string>
+    <string name="duplicate">Duplicate</string>
+    <string name="move_up">Move Up</string>
+    <string name="move_down">Move Down</string>
+    <string name="indent_inc">Indent deeper</string>
+    <string name="indent_dec">Outdent</string>
+    <string name="decrease_indent">Outdent (decrease level)</string>
+    <string name="increase_indent">Indent (increase level)</string>
+    <string name="block_paragraph">Paragraph</string>
+    <string name="block_paragraph_desc">Regular body text</string>
+    <string name="paragraph_hint">Enter paragraph text…</string>
+    <string name="block_h1">Heading 1 (H1)</string>
+    <string name="block_heading1">Heading 1</string>
+    <string name="block_h1_desc">Large section heading</string>
+    <string name="block_heading1_desc">Large title heading</string>
+    <string name="heading1_hint">Heading 1…</string>
+    <string name="block_h2">Heading 2 (H2)</string>
+    <string name="block_heading2">Heading 2</string>
+    <string name="block_h2_desc">Medium subsection heading</string>
+    <string name="block_heading2_desc">Medium section heading</string>
+    <string name="heading2_hint">Heading 2…</string>
+    <string name="block_h3">Heading 3 (H3)</string>
+    <string name="block_heading3">Heading 3</string>
+    <string name="block_h3_desc">Small section heading</string>
+    <string name="block_heading3_desc">Small subsection heading</string>
+    <string name="heading3_hint">Heading 3…</string>
+    <string name="block_bullet">Bulleted List</string>
+    <string name="block_bullet_list">Bullet List</string>
+    <string name="block_bullet_desc">List with bullet points</string>
+    <string name="block_bullet_list_desc">List with bullet points</string>
+    <string name="block_number">Numbered List</string>
+    <string name="block_number_list">Numbered List</string>
+    <string name="block_number_desc">Numbered list 1, 2, 3…</string>
+    <string name="block_number_list_desc">Sequential numbered list</string>
+    <string name="list_item_hint">List item…</string>
+    <string name="next_item">Next item</string>
+    <string name="block_todo">Todo (Task)</string>
+    <string name="block_todo_desc">Interactive checklist task</string>
+    <string name="todo_item_hint">Task description…</string>
+    <string name="next_todo">Next task</string>
+    <string name="block_table">Table</string>
+    <string name="block_table_desc">Grid rows and columns</string>
+    <string name="block_divider">Divider</string>
+    <string name="block_divider_desc">Horizontal line separator</string>
+    <string name="block_type_prefix">Block: </string>
+
+    <!-- Table buttons -->
+    <string name="table_add_row">+ Row</string>
+    <string name="add_row">+ Row</string>
+    <string name="table_del_row">- Row</string>
+    <string name="remove_row">- Row</string>
+    <string name="table_add_col">+ Col</string>
+    <string name="add_col">+ Column</string>
+    <string name="table_del_col">- Col</string>
+    <string name="remove_col">- Column</string>
+
+    <!-- Rich text toolbar -->
+    <string name="format_bold">Bold</string>
+    <string name="format_italic">Italic</string>
+    <string name="format_strikethrough">Strikethrough</string>
+    <string name="format_underline">Underline</string>
+    <string name="format_code">Code</string>
+
+    <!-- Calendar -->
+    <string name="calendar_title">Calendar</string>
+    <string name="calendar_today">Today</string>
+    <string name="today">Today</string>
+    <string name="calendar_notes_on">Notes for %1$s</string>
+    <string name="notes_on_date">Notes for</string>
+    <string name="linked_files_count">Linked files: %1$d</string>
+    <string name="linked_files">Linked files</string>
+    <string name="no_linked_files">No notes for this date</string>
+    <string name="create_note_for_day">Create</string>
+
+    <!-- Tags -->
+    <string name="tags_title">Tags</string>
+    <string name="tags_subtitle">Find files across workspace \'%1$s\'</string>
+    <string name="search_tags">Search tags…</string>
+    <string name="search_tags_placeholder">Search tags…</string>
+    <string name="no_tags_found">No tags found</string>
+    <string name="tags_empty_title">No tags found</string>
+    <string name="no_tags_found_desc">Add tags in note metadata to categorize and find files.</string>
+    <string name="tags_empty_desc">Add tags in note metadata to categorize and find files.</string>
+    <string name="all_tags">All tags (%1$d)</string>
+    <string name="files_with_tag">Files tagged \'%1$s\' (%2$d)</string>
+    <string name="notes_with_tag">Notes with tag</string>
+    <string name="clear_filter">Clear filter</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="theme_title">Appearance Theme</string>
+    <string name="theme_dynamic">Dynamic (Material You)</string>
+    <string name="theme_dynamic_desc">Adapts to system wallpaper colors (Android 12+)</string>
+    <string name="theme_system">System</string>
+    <string name="theme_system_desc">Follow system dark mode settings</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_light_desc">Always use light mode</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_dark_desc">Always use dark mode</string>
+    <string name="date_format_title">Date Display Format</string>
+    <string name="storage_title">Data Storage Location</string>
+    <string name="storage_desc">All workspaces, folders, documents, and blocks are securely stored on device using SQLite.</string>
+    <string name="storage_db_label">SQLite Database</string>
+    <string name="storage_db_desc">All workspaces, folders, documents, blocks, and tags are stored locally on your device in a secure SQLite Room database.</string>
+    <string name="storage_label_btn">Configure storage label</string>
+    <string name="storage_config_button">Custom Path Label</string>
+    <string name="storage_label_title">Storage Label / Path</string>
+    <string name="storage_path_label">Storage path or label</string>
+    <string name="example">Example</string>
+    <string name="customization_title">Interface Customization</string>
+    <string name="hide_nav_labels">Hide bottom bar labels</string>
+    <string name="hide_nav_labels_desc">Display only icons in the navigation bar</string>
+
+    <!-- Dialogs & Buttons -->
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="close">Close</string>
+    <string name="create">Create</string>
+    <string name="delete">Delete</string>
+    <string name="add">Add</string>
+    <string name="ok">OK</string>
+    <string name="color">Color: </string>
+    <string name="icon">Icon: </string>
+    <string name="choose_color">Choose color</string>
+    <string name="choose_icon">Choose icon</string>
+    <string name="tab_emojis">Emoji</string>
+    <string name="tab_material_icons">Material Icons</string>
+    <string name="custom_emoji_label">Custom Emoji or Character</string>
+    <string name="custom_emoji_hint">Type or paste any emoji…</string>
 </resources>

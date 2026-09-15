@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,17 +20,19 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DriveFileMove
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.NoteAdd
+import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -46,69 +47,79 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.R
 import com.example.data.local.DocumentEntity
 import com.example.data.local.FolderEntity
-import com.example.ui.viewmodel.AppScreen
+import com.example.ui.util.AppIconView
 import com.example.ui.viewmodel.NotesViewModel
+
+data class CreateTarget(val folderId: Long?)
+
+sealed class MoveTarget {
+    data class MoveDoc(val doc: DocumentEntity) : MoveTarget()
+    data class MoveFld(val folder: FolderEntity) : MoveTarget()
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FilesTreeScreen(viewModel: NotesViewModel) {
     val activeWorkspace by viewModel.activeWorkspace.collectAsStateWithLifecycle()
-    val folders by viewModel.foldersForActiveWorkspace.collectAsStateWithLifecycle()
-    val documents by viewModel.documentsForActiveWorkspace.collectAsStateWithLifecycle()
+    val folders by viewModel.foldersInWorkspace.collectAsStateWithLifecycle()
+    val documents by viewModel.documentsInWorkspace.collectAsStateWithLifecycle()
 
     var searchQuery by remember { mutableStateOf("") }
     var isSearchActive by remember { mutableStateOf(false) }
 
-    // Map to keep track of expanded folders (default expanded)
-    val expandedFolders = remember { mutableStateMapOf<Long, Boolean>() }
-
-    // Dialogs state
-    var showCreateDocDialog by remember { mutableStateOf<Long?>(null) } // folderId or null for root
-    var showCreateFolderDialog by remember { mutableStateOf<Long?>(null) } // parentId or null for root
+    // Dialog states - explicitly using CreateTarget to distinguish root vs folder
+    var docCreateTarget by remember { mutableStateOf<CreateTarget?>(null) }
+    var folderCreateTarget by remember { mutableStateOf<CreateTarget?>(null) }
     var folderToEdit by remember { mutableStateOf<FolderEntity?>(null) }
     var folderToDelete by remember { mutableStateOf<FolderEntity?>(null) }
     var docToDelete by remember { mutableStateOf<DocumentEntity?>(null) }
+    var itemToMove by remember { mutableStateOf<MoveTarget?>(null) }
+
+    val expandedFolders = remember { mutableMapOf<Long, Boolean>() }
 
     Scaffold(
         topBar = {
             TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
                 title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column {
                         Text(
-                            text = activeWorkspace?.icon ?: "📁",
-                            fontSize = 22.sp
+                            stringResource(R.string.files_title),
+                            style = MaterialTheme.typography.titleLarge
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Column {
-                            Text(
-                                text = activeWorkspace?.name ?: "Воркспейс",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                text = "Древо файлов и папок",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                        activeWorkspace?.let { ws ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                AppIconView(icon = ws.icon, size = 14.dp, fontSize = 12.sp)
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    ws.name,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 },
@@ -116,7 +127,7 @@ fun FilesTreeScreen(viewModel: NotesViewModel) {
                     IconButton(onClick = { isSearchActive = !isSearchActive }) {
                         Icon(
                             if (isSearchActive) Icons.Default.Close else Icons.Default.Search,
-                            contentDescription = "Поиск"
+                            contentDescription = stringResource(R.string.search_files_placeholder)
                         )
                     }
                 }
@@ -133,12 +144,12 @@ fun FilesTreeScreen(viewModel: NotesViewModel) {
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Поиск файлов и папок...") },
+                    placeholder = { Text(stringResource(R.string.search_files_placeholder)) },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Default.Close, contentDescription = "Очистить")
+                                Icon(Icons.Default.Close, contentDescription = null)
                             }
                         }
                     },
@@ -149,7 +160,7 @@ fun FilesTreeScreen(viewModel: NotesViewModel) {
                 )
             }
 
-            // Quick Create Bar
+            // Quick Create Bar - WORKING BUTTONS FOR ROOT NOTE AND FOLDER
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -157,23 +168,23 @@ fun FilesTreeScreen(viewModel: NotesViewModel) {
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Button(
-                    onClick = { showCreateDocDialog = null },
+                    onClick = { docCreateTarget = CreateTarget(folderId = null) },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(Icons.Default.NoteAdd, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Заметка")
+                    Text(stringResource(R.string.new_note))
                 }
 
                 OutlinedButton(
-                    onClick = { showCreateFolderDialog = null },
+                    onClick = { folderCreateTarget = CreateTarget(folderId = null) },
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(Icons.Default.CreateNewFolder, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Папка")
+                    Text(stringResource(R.string.new_folder))
                 }
             }
 
@@ -181,21 +192,20 @@ fun FilesTreeScreen(viewModel: NotesViewModel) {
             if (folders.isEmpty() && documents.isEmpty()) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
+                        .fillMaxSize()
                         .padding(32.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("🗂️", fontSize = 48.sp)
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("📁", fontSize = 56.sp)
+                        Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            "В этом воркспейсе пока пусто",
+                            stringResource(R.string.files_empty_title),
                             style = MaterialTheme.typography.titleMedium
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            "Создайте папку или добавьте первую заметку",
+                            stringResource(R.string.files_empty_subtitle),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -205,41 +215,34 @@ fun FilesTreeScreen(viewModel: NotesViewModel) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                        .padding(horizontal = 12.dp)
                 ) {
-                    // Render Root Folders and their tree
+                    // Render Top-level Folders (parentId == null)
                     val rootFolders = folders.filter { it.parentId == null }
-                        .let { list ->
-                            if (searchQuery.isNotBlank()) {
-                                list.filter { it.name.contains(searchQuery, ignoreCase = true) }
-                            } else list
-                        }
-
-                    item {
-                        rootFolders.forEach { folder ->
-                            FolderTreeNode(
-                                folder = folder,
-                                allFolders = folders,
-                                allDocuments = documents,
-                                depth = 0,
-                                expandedFolders = expandedFolders,
-                                searchQuery = searchQuery,
-                                viewModel = viewModel,
-                                onToggleExpand = { fId ->
-                                    val current = expandedFolders[fId] ?: true
-                                    expandedFolders[fId] = !current
-                                },
-                                onAddDocInFolder = { fId -> showCreateDocDialog = fId },
-                                onAddSubfolder = { fId -> showCreateFolderDialog = fId },
-                                onEditFolder = { f -> folderToEdit = f },
-                                onDeleteFolder = { f -> folderToDelete = f },
-                                onDeleteDoc = { d -> docToDelete = d }
-                            )
-                        }
+                    items(rootFolders.size, key = { "folder_${rootFolders[it].id}" }) { idx ->
+                        val folder = rootFolders[idx]
+                        FolderTreeNode(
+                            folder = folder,
+                            allFolders = folders,
+                            allDocuments = documents,
+                            depth = 0,
+                            expandedFolders = expandedFolders,
+                            searchQuery = searchQuery,
+                            viewModel = viewModel,
+                            onToggleExpand = { fId ->
+                                val current = expandedFolders[fId] ?: true
+                                expandedFolders[fId] = !current
+                            },
+                            onAddDocInFolder = { fId -> docCreateTarget = CreateTarget(folderId = fId) },
+                            onAddSubfolder = { fId -> folderCreateTarget = CreateTarget(folderId = fId) },
+                            onEditFolder = { f -> folderToEdit = f },
+                            onDeleteFolder = { f -> folderToDelete = f },
+                            onDeleteDoc = { d -> docToDelete = d },
+                            onMoveItem = { target -> itemToMove = target }
+                        )
                     }
 
-                    // Render Root Documents (no folder)
+                    // Render Root Documents (folderId == null)
                     val rootDocuments = documents.filter { it.folderId == null }
                         .let { list ->
                             if (searchQuery.isNotBlank()) {
@@ -255,7 +258,7 @@ fun FilesTreeScreen(viewModel: NotesViewModel) {
                         item {
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                "Файлы без папки",
+                                stringResource(R.string.root_files),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(start = 8.dp, bottom = 4.dp)
@@ -268,7 +271,8 @@ fun FilesTreeScreen(viewModel: NotesViewModel) {
                                 document = doc,
                                 depth = 0,
                                 viewModel = viewModel,
-                                onDelete = { docToDelete = doc }
+                                onDelete = { docToDelete = doc },
+                                onMove = { itemToMove = MoveTarget.MoveDoc(doc) }
                             )
                         }
                     }
@@ -282,40 +286,42 @@ fun FilesTreeScreen(viewModel: NotesViewModel) {
     }
 
     // Dialog: Create Document
-    showCreateDocDialog?.let { folderId ->
+    docCreateTarget?.let { target ->
         CreateDocumentDialog(
-            folderId = folderId,
+            folderId = target.folderId,
             onConfirm = { title, icon, colorHex ->
-                viewModel.createDocument(folderId, title, icon, colorHex)
-                showCreateDocDialog = null
+                viewModel.createDocument(target.folderId, title, icon, colorHex)
+                docCreateTarget = null
             },
-            onDismiss = { showCreateDocDialog = null }
-        )
-    }
-    // Dialog: Create Doc at root
-    if (showCreateDocDialog == null && showCreateDocDialog != null) {
-        // Handled above
-    } else if (showCreateDocDialog != null && showCreateDocDialog == -1L) {
-        // Special marker for root doc
-        CreateDocumentDialog(
-            folderId = null,
-            onConfirm = { title, icon, colorHex ->
-                viewModel.createDocument(null, title, icon, colorHex)
-                showCreateDocDialog = null
-            },
-            onDismiss = { showCreateDocDialog = null }
+            onDismiss = { docCreateTarget = null }
         )
     }
 
     // Dialog: Create Folder
-    showCreateFolderDialog?.let { parentId ->
+    folderCreateTarget?.let { target ->
         CreateFolderDialog(
-            parentId = parentId,
+            parentId = target.folderId,
             onConfirm = { name, icon, colorHex ->
-                viewModel.createFolder(parentId, name, icon, colorHex)
-                showCreateFolderDialog = null
+                viewModel.createFolder(target.folderId, name, icon, colorHex)
+                folderCreateTarget = null
             },
-            onDismiss = { showCreateFolderDialog = null }
+            onDismiss = { folderCreateTarget = null }
+        )
+    }
+
+    // Dialog: Move Item (Drag'n'drop / Move to folder)
+    itemToMove?.let { target ->
+        MoveToFolderDialog(
+            target = target,
+            allFolders = folders,
+            onConfirm = { destFolderId ->
+                when (target) {
+                    is MoveTarget.MoveDoc -> viewModel.moveDocument(target.doc.id, destFolderId)
+                    is MoveTarget.MoveFld -> viewModel.moveFolder(target.folder.id, destFolderId)
+                }
+                itemToMove = null
+            },
+            onDismiss = { itemToMove = null }
         )
     }
 
@@ -334,8 +340,8 @@ fun FilesTreeScreen(viewModel: NotesViewModel) {
     // Dialog: Delete Folder
     folderToDelete?.let { f ->
         ConfirmDeleteDialog(
-            title = "Удалить папку?",
-            message = "Вы уверены, что хотите удалить папку '${f.name}'? Все вложенные файлы и подпапки будут удалены.",
+            title = stringResource(R.string.delete_folder),
+            message = stringResource(R.string.delete_folder_confirm, f.name),
             onConfirm = {
                 viewModel.deleteFolder(f)
                 folderToDelete = null
@@ -347,8 +353,8 @@ fun FilesTreeScreen(viewModel: NotesViewModel) {
     // Dialog: Delete Document
     docToDelete?.let { d ->
         ConfirmDeleteDialog(
-            title = "Удалить документ?",
-            message = "Вы уверены, что хотите удалить '${d.title}'?",
+            title = stringResource(R.string.delete_doc),
+            message = stringResource(R.string.delete_doc_confirm, d.title),
             onConfirm = {
                 viewModel.deleteDocument(d)
                 docToDelete = null
@@ -372,7 +378,8 @@ fun FolderTreeNode(
     onAddSubfolder: (Long) -> Unit,
     onEditFolder: (FolderEntity) -> Unit,
     onDeleteFolder: (FolderEntity) -> Unit,
-    onDeleteDoc: (DocumentEntity) -> Unit
+    onDeleteDoc: (DocumentEntity) -> Unit,
+    onMoveItem: (MoveTarget) -> Unit
 ) {
     val isExpanded = expandedFolders[folder.id] ?: true
     val childFolders = allFolders.filter { it.parentId == folder.id }
@@ -410,15 +417,15 @@ fun FolderTreeNode(
                 // Expand chevron
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.KeyboardArrowDown else Icons.Default.KeyboardArrowRight,
-                    contentDescription = if (isExpanded) "Свернуть" else "Развернуть",
+                    contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp)
                 )
 
                 Spacer(modifier = Modifier.width(4.dp))
 
-                // Folder Icon
-                Text(text = folder.icon, fontSize = 20.sp)
+                // Folder Icon (Support Emoji + Material)
+                AppIconView(icon = folder.icon, size = 20.dp, fontSize = 20.sp, tint = markerColor)
 
                 Spacer(modifier = Modifier.width(8.dp))
 
@@ -452,49 +459,58 @@ fun FolderTreeNode(
                     )
                 }
 
-                // More Menu
+                // Context menu
                 Box {
                     IconButton(
                         onClick = { menuExpanded = true },
                         modifier = Modifier.size(32.dp)
                     ) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Действия", modifier = Modifier.size(18.dp))
+                        Icon(Icons.Default.MoreVert, contentDescription = null, modifier = Modifier.size(18.dp))
                     }
+
                     DropdownMenu(
                         expanded = menuExpanded,
                         onDismissRequest = { menuExpanded = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Новая заметка") },
-                            leadingIcon = { Icon(Icons.Default.NoteAdd, contentDescription = null) },
+                            text = { Text(stringResource(R.string.new_note_in_folder)) },
                             onClick = {
                                 menuExpanded = false
                                 onAddDocInFolder(folder.id)
-                            }
+                            },
+                            leadingIcon = { Icon(Icons.Default.NoteAdd, contentDescription = null) }
                         )
                         DropdownMenuItem(
-                            text = { Text("Новая подпапка") },
-                            leadingIcon = { Icon(Icons.Default.CreateNewFolder, contentDescription = null) },
+                            text = { Text(stringResource(R.string.new_subfolder)) },
                             onClick = {
                                 menuExpanded = false
                                 onAddSubfolder(folder.id)
-                            }
+                            },
+                            leadingIcon = { Icon(Icons.Default.CreateNewFolder, contentDescription = null) }
                         )
                         DropdownMenuItem(
-                            text = { Text("Изменить папку") },
-                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                            text = { Text(stringResource(R.string.move_item)) },
+                            onClick = {
+                                menuExpanded = false
+                                onMoveItem(MoveTarget.MoveFld(folder))
+                            },
+                            leadingIcon = { Icon(Icons.Default.DriveFileMove, contentDescription = null) }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.edit_folder)) },
                             onClick = {
                                 menuExpanded = false
                                 onEditFolder(folder)
-                            }
+                            },
+                            leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) }
                         )
                         DropdownMenuItem(
-                            text = { Text("Удалить папку", color = MaterialTheme.colorScheme.error) },
-                            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                            text = { Text(stringResource(R.string.delete_folder), color = MaterialTheme.colorScheme.error) },
                             onClick = {
                                 menuExpanded = false
                                 onDeleteFolder(folder)
-                            }
+                            },
+                            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) }
                         )
                     }
                 }
@@ -523,7 +539,8 @@ fun FolderTreeNode(
                         onAddSubfolder = onAddSubfolder,
                         onEditFolder = onEditFolder,
                         onDeleteFolder = onDeleteFolder,
-                        onDeleteDoc = onDeleteDoc
+                        onDeleteDoc = onDeleteDoc,
+                        onMoveItem = onMoveItem
                     )
                 }
 
@@ -533,7 +550,8 @@ fun FolderTreeNode(
                         document = doc,
                         depth = depth + 1,
                         viewModel = viewModel,
-                        onDelete = { onDeleteDoc(doc) }
+                        onDelete = { onDeleteDoc(doc) },
+                        onMove = { onMoveItem(MoveTarget.MoveDoc(doc)) }
                     )
                 }
             }
@@ -546,7 +564,8 @@ fun DocumentTreeItem(
     document: DocumentEntity,
     depth: Int,
     viewModel: NotesViewModel,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onMove: () -> Unit
 ) {
     val markerColor = parseColorHex(document.colorHex)
     var menuExpanded by remember { mutableStateOf(false) }
@@ -573,8 +592,8 @@ fun DocumentTreeItem(
                 .padding(horizontal = 10.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Document Icon
-            Text(text = document.icon, fontSize = 20.sp)
+            // Document Icon (Support Emoji + Material)
+            AppIconView(icon = document.icon, size = 20.dp, fontSize = 20.sp, tint = markerColor)
 
             Spacer(modifier = Modifier.width(10.dp))
 
@@ -598,83 +617,181 @@ fun DocumentTreeItem(
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                     modifier = Modifier.padding(top = 2.dp)
                 ) {
-                    // Status tag
+                    // Status Tag Badge
                     if (document.statusTag.isNotBlank()) {
                         Text(
                             text = document.statusTag,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary,
                             modifier = Modifier
-                                .background(
-                                    MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-                                    RoundedCornerShape(4.dp)
-                                )
+                                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f), RoundedCornerShape(4.dp))
                                 .padding(horizontal = 5.dp, vertical = 1.dp)
                         )
+                        Spacer(modifier = Modifier.width(6.dp))
                     }
 
-                    // Calendar badge
-                    if (document.calendarDate != null) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.Default.CalendarMonth,
-                                contentDescription = null,
-                                modifier = Modifier.size(12.dp),
-                                tint = MaterialTheme.colorScheme.secondary
-                            )
-                            Spacer(modifier = Modifier.width(2.dp))
-                            Text(
-                                text = viewModel.formatDate(document.calendarDate),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.secondary
-                            )
-                        }
+                    // Calendar date badge if present
+                    document.calendarDate?.let { cDate ->
+                        Text(
+                            text = "📅 ${viewModel.formatDate(cDate)}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
                     }
 
-                    // Date updated
-                    Text(
-                        text = viewModel.formatDate(document.updatedAt),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    // Tags
+                    val tags = document.tagsCsv.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                    if (tags.isNotEmpty()) {
+                        Text(
+                            text = tags.take(2).joinToString(" ") { "#$it" } + if (tags.size > 2) "…" else "",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.tertiary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
 
-            // More Menu
+            // Context menu
             Box {
                 IconButton(
                     onClick = { menuExpanded = true },
                     modifier = Modifier.size(32.dp)
                 ) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Действия", modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.MoreVert, contentDescription = null, modifier = Modifier.size(18.dp))
                 }
+
                 DropdownMenu(
                     expanded = menuExpanded,
                     onDismissRequest = { menuExpanded = false }
                 ) {
                     DropdownMenuItem(
-                        text = { Text("Открыть в редакторе") },
-                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                        text = { Text(stringResource(R.string.open_in_editor)) },
                         onClick = {
                             menuExpanded = false
                             viewModel.openDocumentInEditor(document.id)
-                        }
+                        },
+                        leadingIcon = { Icon(Icons.Default.OpenInNew, contentDescription = null) }
                     )
                     DropdownMenuItem(
-                        text = { Text("Удалить", color = MaterialTheme.colorScheme.error) },
-                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                        text = { Text(stringResource(R.string.move_item)) },
+                        onClick = {
+                            menuExpanded = false
+                            onMove()
+                        },
+                        leadingIcon = { Icon(Icons.Default.DriveFileMove, contentDescription = null) }
+                    )
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.delete_doc), color = MaterialTheme.colorScheme.error) },
                         onClick = {
                             menuExpanded = false
                             onDelete()
-                        }
+                        },
+                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) }
                     )
                 }
             }
         }
     }
+}
+
+@Composable
+fun MoveToFolderDialog(
+    target: MoveTarget,
+    allFolders: List<FolderEntity>,
+    onConfirm: (Long?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val itemName = when (target) {
+        is MoveTarget.MoveDoc -> target.doc.title
+        is MoveTarget.MoveFld -> target.folder.name
+    }
+
+    // If moving a folder, exclude itself and its descendants
+    val validFolders = if (target is MoveTarget.MoveFld) {
+        val selfAndDescendants = mutableSetOf(target.folder.id)
+        var addedMore = true
+        while (addedMore) {
+            addedMore = false
+            for (f in allFolders) {
+                if (f.parentId != null && f.parentId in selfAndDescendants && f.id !in selfAndDescendants) {
+                    selfAndDescendants.add(f.id)
+                    addedMore = true
+                }
+            }
+        }
+        allFolders.filter { it.id !in selfAndDescendants }
+    } else {
+        allFolders
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.move_item)) },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = itemName,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                // Option: Root
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onConfirm(null) },
+                    color = MaterialTheme.colorScheme.surfaceVariant
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.FolderOpen, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.move_to_root), fontWeight = androidx.compose.ui.text.font.FontWeight.Medium)
+                    }
+                }
+
+                // List of folders
+                LazyColumn(modifier = Modifier.height(200.dp)) {
+                    items(validFolders.size) { idx ->
+                        val f = validFolders[idx]
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 3.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { onConfirm(f.id) },
+                            color = MaterialTheme.colorScheme.surface
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                AppIconView(icon = f.icon, size = 18.dp, fontSize = 16.sp)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(f.name, style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }
 
 @Composable
@@ -684,23 +801,26 @@ fun CreateDocumentDialog(
     onDismiss: () -> Unit
 ) {
     var title by remember { mutableStateOf("") }
-    var selectedIcon by remember { mutableStateOf("📝") }
-    var selectedColorHex by remember { mutableStateOf("#3B82F6") }
-    var showColorPicker by remember { mutableStateOf(false) }
+    var icon by remember { mutableStateOf("📝") }
+    var colorHex by remember { mutableStateOf("#3B82F6") }
+
     var showIconPicker by remember { mutableStateOf(false) }
+    var showColorPicker by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Новая заметка") },
+        title = { Text(stringResource(R.string.new_note)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = title,
                     onValueChange = { title = it },
-                    label = { Text("Название заметки") },
+                    label = { Text(stringResource(R.string.note_title)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                Spacer(modifier = Modifier.height(14.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -714,8 +834,9 @@ fun CreateDocumentDialog(
                             .clickable { showIconPicker = true }
                             .padding(8.dp)
                     ) {
-                        Text("Иконка: ", style = MaterialTheme.typography.bodyMedium)
-                        Text(selectedIcon, fontSize = 24.sp)
+                        Text(stringResource(R.string.icon))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        AppIconView(icon = icon, size = 24.dp, fontSize = 24.sp)
                     }
 
                     Row(
@@ -725,12 +846,13 @@ fun CreateDocumentDialog(
                             .clickable { showColorPicker = true }
                             .padding(8.dp)
                     ) {
-                        Text("Цвет: ", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.color))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Box(
                             modifier = Modifier
                                 .size(24.dp)
                                 .clip(CircleShape)
-                                .background(parseColorHex(selectedColorHex))
+                                .background(parseColorHex(colorHex))
                         )
                     }
                 }
@@ -740,34 +862,34 @@ fun CreateDocumentDialog(
             Button(
                 onClick = {
                     if (title.isNotBlank()) {
-                        onConfirm(title.trim(), selectedIcon, selectedColorHex)
+                        onConfirm(title.trim(), icon, colorHex)
                     }
                 },
                 enabled = title.isNotBlank()
             ) {
-                Text("Создать")
+                Text(stringResource(R.string.create))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text(stringResource(R.string.cancel))
             }
         }
     )
 
-    if (showColorPicker) {
-        ColorPickerDialog(
-            currentColorHex = selectedColorHex,
-            onColorSelected = { selectedColorHex = it },
-            onDismiss = { showColorPicker = false }
+    if (showIconPicker) {
+        IconPickerDialog(
+            currentIcon = icon,
+            onIconSelected = { icon = it },
+            onDismiss = { showIconPicker = false }
         )
     }
 
-    if (showIconPicker) {
-        IconPickerDialog(
-            currentIcon = selectedIcon,
-            onIconSelected = { selectedIcon = it },
-            onDismiss = { showIconPicker = false }
+    if (showColorPicker) {
+        ColorPickerDialog(
+            currentColorHex = colorHex,
+            onColorSelected = { colorHex = it },
+            onDismiss = { showColorPicker = false }
         )
     }
 }
@@ -779,23 +901,26 @@ fun CreateFolderDialog(
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
-    var selectedIcon by remember { mutableStateOf("📁") }
-    var selectedColorHex by remember { mutableStateOf("#3B82F6") }
-    var showColorPicker by remember { mutableStateOf(false) }
+    var icon by remember { mutableStateOf("📁") }
+    var colorHex by remember { mutableStateOf("#3B82F6") }
+
     var showIconPicker by remember { mutableStateOf(false) }
+    var showColorPicker by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (parentId == null) "Новая папка" else "Новая вложенная папка") },
+        title = { Text(if (parentId == null) stringResource(R.string.new_folder) else stringResource(R.string.new_subfolder)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Название папки") },
+                    label = { Text(stringResource(R.string.folder_name)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                Spacer(modifier = Modifier.height(14.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -809,8 +934,9 @@ fun CreateFolderDialog(
                             .clickable { showIconPicker = true }
                             .padding(8.dp)
                     ) {
-                        Text("Иконка: ", style = MaterialTheme.typography.bodyMedium)
-                        Text(selectedIcon, fontSize = 24.sp)
+                        Text(stringResource(R.string.icon))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        AppIconView(icon = icon, size = 24.dp, fontSize = 24.sp)
                     }
 
                     Row(
@@ -820,12 +946,13 @@ fun CreateFolderDialog(
                             .clickable { showColorPicker = true }
                             .padding(8.dp)
                     ) {
-                        Text("Цвет: ", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.color))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Box(
                             modifier = Modifier
                                 .size(24.dp)
                                 .clip(CircleShape)
-                                .background(parseColorHex(selectedColorHex))
+                                .background(parseColorHex(colorHex))
                         )
                     }
                 }
@@ -835,34 +962,34 @@ fun CreateFolderDialog(
             Button(
                 onClick = {
                     if (name.isNotBlank()) {
-                        onConfirm(name.trim(), selectedIcon, selectedColorHex)
+                        onConfirm(name.trim(), icon, colorHex)
                     }
                 },
                 enabled = name.isNotBlank()
             ) {
-                Text("Создать")
+                Text(stringResource(R.string.create))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text(stringResource(R.string.cancel))
             }
         }
     )
 
-    if (showColorPicker) {
-        ColorPickerDialog(
-            currentColorHex = selectedColorHex,
-            onColorSelected = { selectedColorHex = it },
-            onDismiss = { showColorPicker = false }
+    if (showIconPicker) {
+        IconPickerDialog(
+            currentIcon = icon,
+            onIconSelected = { icon = it },
+            onDismiss = { showIconPicker = false }
         )
     }
 
-    if (showIconPicker) {
-        IconPickerDialog(
-            currentIcon = selectedIcon,
-            onIconSelected = { selectedIcon = it },
-            onDismiss = { showIconPicker = false }
+    if (showColorPicker) {
+        ColorPickerDialog(
+            currentColorHex = colorHex,
+            onColorSelected = { colorHex = it },
+            onDismiss = { showColorPicker = false }
         )
     }
 }
@@ -874,23 +1001,26 @@ fun EditFolderDialog(
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf(folder.name) }
-    var selectedIcon by remember { mutableStateOf(folder.icon) }
-    var selectedColorHex by remember { mutableStateOf(folder.colorHex) }
-    var showColorPicker by remember { mutableStateOf(false) }
+    var icon by remember { mutableStateOf(folder.icon) }
+    var colorHex by remember { mutableStateOf(folder.colorHex) }
+
     var showIconPicker by remember { mutableStateOf(false) }
+    var showColorPicker by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Редактировать папку") },
+        title = { Text(stringResource(R.string.edit_folder)) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Column(modifier = Modifier.fillMaxWidth()) {
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Название папки") },
+                    label = { Text(stringResource(R.string.folder_name)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                Spacer(modifier = Modifier.height(14.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -904,8 +1034,9 @@ fun EditFolderDialog(
                             .clickable { showIconPicker = true }
                             .padding(8.dp)
                     ) {
-                        Text("Иконка: ", style = MaterialTheme.typography.bodyMedium)
-                        Text(selectedIcon, fontSize = 24.sp)
+                        Text(stringResource(R.string.icon))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        AppIconView(icon = icon, size = 24.dp, fontSize = 24.sp)
                     }
 
                     Row(
@@ -915,12 +1046,13 @@ fun EditFolderDialog(
                             .clickable { showColorPicker = true }
                             .padding(8.dp)
                     ) {
-                        Text("Цвет: ", style = MaterialTheme.typography.bodyMedium)
+                        Text(stringResource(R.string.color))
+                        Spacer(modifier = Modifier.width(6.dp))
                         Box(
                             modifier = Modifier
                                 .size(24.dp)
                                 .clip(CircleShape)
-                                .background(parseColorHex(selectedColorHex))
+                                .background(parseColorHex(colorHex))
                         )
                     }
                 }
@@ -930,34 +1062,34 @@ fun EditFolderDialog(
             Button(
                 onClick = {
                     if (name.isNotBlank()) {
-                        onConfirm(folder.copy(name = name.trim(), icon = selectedIcon, colorHex = selectedColorHex))
+                        onConfirm(folder.copy(name = name.trim(), icon = icon, colorHex = colorHex, updatedAt = System.currentTimeMillis()))
                     }
                 },
                 enabled = name.isNotBlank()
             ) {
-                Text("Сохранить")
+                Text(stringResource(R.string.save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Отмена")
+                Text(stringResource(R.string.cancel))
             }
         }
     )
 
-    if (showColorPicker) {
-        ColorPickerDialog(
-            currentColorHex = selectedColorHex,
-            onColorSelected = { selectedColorHex = it },
-            onDismiss = { showColorPicker = false }
+    if (showIconPicker) {
+        IconPickerDialog(
+            currentIcon = icon,
+            onIconSelected = { icon = it },
+            onDismiss = { showIconPicker = false }
         )
     }
 
-    if (showIconPicker) {
-        IconPickerDialog(
-            currentIcon = selectedIcon,
-            onIconSelected = { selectedIcon = it },
-            onDismiss = { showIconPicker = false }
+    if (showColorPicker) {
+        ColorPickerDialog(
+            currentColorHex = colorHex,
+            onColorSelected = { colorHex = it },
+            onDismiss = { showColorPicker = false }
         )
     }
 }

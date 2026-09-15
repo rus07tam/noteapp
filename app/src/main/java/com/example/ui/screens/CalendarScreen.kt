@@ -1,8 +1,5 @@
 package com.example.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -19,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -27,7 +23,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -36,9 +31,7 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -50,13 +43,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.data.local.DocumentEntity
+import com.example.R
+import com.example.ui.util.AppIconView
 import com.example.ui.viewmodel.NotesViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -82,18 +77,16 @@ fun CalendarScreen(viewModel: NotesViewModel) {
 
     var showQuickCreateDialog by remember { mutableStateOf(false) }
 
-    // Month & Year header string
-    val monthYearFormat = remember { SimpleDateFormat("LLLL yyyy", Locale("ru")) }
-    val currentMonthTitle = remember(currentCalendarMonth.timeInMillis) {
+    val currentLocale = Locale.getDefault()
+    val monthYearFormat = remember(currentLocale) { SimpleDateFormat("LLLL yyyy", currentLocale) }
+    val currentMonthTitle = remember(currentCalendarMonth.timeInMillis, currentLocale) {
         monthYearFormat.format(currentCalendarMonth.time).replaceFirstChar { it.uppercase() }
     }
 
-    // Days grid calculation
     val daysInGrid = remember(currentCalendarMonth.timeInMillis) {
         calculateCalendarDays(currentCalendarMonth)
     }
 
-    // Find documents linked to the selected day
     val docsForSelectedDay = remember(selectedDayMillis, documents) {
         documents.filter { doc ->
             doc.calendarDate != null && isSameDay(doc.calendarDate, selectedDayMillis)
@@ -105,9 +98,9 @@ fun CalendarScreen(viewModel: NotesViewModel) {
             TopAppBar(
                 title = {
                     Column {
-                        Text("Календарь", style = MaterialTheme.typography.titleLarge)
+                        Text(stringResource(R.string.calendar_title), style = MaterialTheme.typography.titleLarge)
                         Text(
-                            text = "Воркспейс: ${activeWorkspace?.name ?: "—"}",
+                            text = "${stringResource(R.string.nav_workspaces)}: ${activeWorkspace?.name ?: "—"}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -128,7 +121,7 @@ fun CalendarScreen(viewModel: NotesViewModel) {
                     ) {
                         Icon(Icons.Default.CalendarToday, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Сегодня", fontSize = 12.sp)
+                        Text(stringResource(R.string.today), fontSize = 12.sp)
                     }
                 }
             )
@@ -162,7 +155,7 @@ fun CalendarScreen(viewModel: NotesViewModel) {
                             newCal.add(Calendar.MONTH, -1)
                             currentCalendarMonth = newCal
                         }) {
-                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Предыдущий месяц")
+                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Prev month")
                         }
 
                         Text(
@@ -177,7 +170,7 @@ fun CalendarScreen(viewModel: NotesViewModel) {
                             newCal.add(Calendar.MONTH, 1)
                             currentCalendarMonth = newCal
                         }) {
-                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Следующий месяц")
+                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next month")
                         }
                     }
                 }
@@ -194,8 +187,14 @@ fun CalendarScreen(viewModel: NotesViewModel) {
                     border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                 ) {
                     Column(modifier = Modifier.padding(10.dp)) {
-                        // Days of Week Header
-                        val weekdays = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
+                        // Days of Week Header localized
+                        val isRu = currentLocale.language == "ru"
+                        val weekdays = if (isRu) {
+                            listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
+                        } else {
+                            listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+                        }
+
                         Row(modifier = Modifier.fillMaxWidth()) {
                             weekdays.forEach { dayName ->
                                 Text(
@@ -311,15 +310,15 @@ fun CalendarScreen(viewModel: NotesViewModel) {
                         ) {
                             Column {
                                 Text(
-                                    text = "Заметки на $selectedDateFormatted",
+                                    text = "${stringResource(R.string.notes_on_date)} $selectedDateFormatted",
                                     style = MaterialTheme.typography.titleSmall,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
                                     text = if (docsForSelectedDay.isNotEmpty()) {
-                                        "Связано файлов: ${docsForSelectedDay.size}"
+                                        "${stringResource(R.string.linked_files)}: ${docsForSelectedDay.size}"
                                     } else {
-                                        "Нет связанных заметок"
+                                        stringResource(R.string.no_linked_files)
                                     },
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -333,7 +332,7 @@ fun CalendarScreen(viewModel: NotesViewModel) {
                             ) {
                                 Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Text("Создать", fontSize = 12.sp)
+                                Text(stringResource(R.string.create), fontSize = 12.sp)
                             }
                         }
 
@@ -361,7 +360,7 @@ fun CalendarScreen(viewModel: NotesViewModel) {
                                                 .padding(10.dp),
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text(doc.icon, fontSize = 20.sp)
+                                            AppIconView(icon = doc.icon, size = 22.dp, fontSize = 20.sp, tint = markerColor)
                                             Spacer(modifier = Modifier.width(10.dp))
                                             Column(modifier = Modifier.weight(1f)) {
                                                 Text(
@@ -428,14 +427,12 @@ fun calculateCalendarDays(monthCal: Calendar): List<CalendarDayInfo> {
     val cal = monthCal.clone() as Calendar
     cal.set(Calendar.DAY_OF_MONTH, 1)
 
-    // Monday is 1st day of week
     val firstDayOfWeek = cal.get(Calendar.DAY_OF_WEEK)
     val prefixDays = (firstDayOfWeek - Calendar.MONDAY + 7) % 7
 
     cal.add(Calendar.DAY_OF_MONTH, -prefixDays)
 
     val currentMonth = monthCal.get(Calendar.MONTH)
-    // 42 days (6 weeks)
     for (i in 0 until 42) {
         days.add(
             CalendarDayInfo(
