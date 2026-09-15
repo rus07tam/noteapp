@@ -34,6 +34,12 @@ jobs:
       - name: Set up Gradle cache
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Ensure gradlew is executable
+        # The executable bit on gradlew has been stripped by commit tooling
+        # before (mode change 100755 => 100644 with unchanged content), which
+        # breaks `./gradlew` on fresh checkouts. Do not rely on the bit.
+        run: chmod +x gradlew
+
       - name: Generate debug keystore
         # app/build.gradle.kts overrides debug signing to use
         # <rootDir>/debug.keystore, which is gitignored and absent in CI.
