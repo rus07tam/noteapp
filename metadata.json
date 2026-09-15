@@ -1,0 +1,6 @@
+{
+  "name": "Заметки",
+  "description": "Приложение для заметок с иерархией воркспейсов, папок и документов, блочным редактором, метаданными, календарем и тегами.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
