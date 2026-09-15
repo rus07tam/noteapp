@@ -224,6 +224,22 @@
     <string name="hide_nav_labels">Скрыть подписи навигации</string>
     <string name="hide_nav_labels_desc">Отображать только иконки в нижней панели</string>
 
+    <!-- Cutout & Layout Settings -->
+    <string name="cutout_display_title">Отображать под вырезом экрана</string>
+    <string name="cutout_display_desc">Растягивать интерфейс на всю высоту вокруг выреза камеры / notch</string>
+
+    <!-- Workspace Edit -->
+    <string name="edit_workspace">Изменить воркспейс</string>
+    <string name="edit_workspace_desc">Изменение названия, иконки и цвета</string>
+
+    <!-- Drag and drop in files -->
+    <string name="drag_to_move">Перетащите для перемещения</string>
+    <string name="drop_into_folder">Переместить в папку «%1$s»</string>
+    <string name="drop_to_root">Переместить в корень (без папки)</string>
+    <string name="item_moved">Элемент перемещен</string>
+    <string name="moving_item">Перемещение: %1$s</string>
+    <string name="cancel_drag">Отменить перемещение</string>
+
     <!-- Dialogs & Buttons -->
     <string name="save">Сохранить</string>
     <string name="cancel">Отмена</string>

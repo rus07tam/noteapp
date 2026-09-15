@@ -144,6 +144,16 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
     )
     val hideNavLabels: StateFlow<Boolean> = _hideNavLabels.asStateFlow()
 
+    private val _renderUnderCutout = MutableStateFlow(
+        prefs.getBoolean("render_under_cutout", false)
+    )
+    val renderUnderCutout: StateFlow<Boolean> = _renderUnderCutout.asStateFlow()
+
+    fun setRenderUnderCutout(enable: Boolean) {
+        _renderUnderCutout.value = enable
+        prefs.edit().putBoolean("render_under_cutout", enable).apply()
+    }
+
     init {
         viewModelScope.launch {
             val initialWsId = repository.checkAndSeedDefaultData()
@@ -239,6 +249,12 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
     fun renameWorkspace(workspace: WorkspaceEntity, newName: String) {
         viewModelScope.launch {
             repository.updateWorkspace(workspace.copy(name = newName))
+        }
+    }
+
+    fun updateWorkspace(workspace: WorkspaceEntity, newName: String, newIcon: String, newColorHex: String) {
+        viewModelScope.launch {
+            repository.updateWorkspace(workspace.copy(name = newName, icon = newIcon, colorHex = newColorHex))
         }
     }
 

@@ -224,6 +224,22 @@
     <string name="hide_nav_labels">Hide bottom bar labels</string>
     <string name="hide_nav_labels_desc">Display only icons in the navigation bar</string>
 
+    <!-- Cutout & Layout Settings -->
+    <string name="cutout_display_title">Display under screen cutout</string>
+    <string name="cutout_display_desc">Allow content to extend into the camera notch / cutout area</string>
+
+    <!-- Workspace Edit -->
+    <string name="edit_workspace">Edit Workspace</string>
+    <string name="edit_workspace_desc">Customize name, icon, and marker color</string>
+
+    <!-- Drag and drop in files -->
+    <string name="drag_to_move">Drag to move</string>
+    <string name="drop_into_folder">Drop into \"%1$s\"</string>
+    <string name="drop_to_root">Drop to Root (no folder)</string>
+    <string name="item_moved">Item moved</string>
+    <string name="moving_item">Moving: %1$s</string>
+    <string name="cancel_drag">Cancel move</string>
+
     <!-- Dialogs & Buttons -->
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>

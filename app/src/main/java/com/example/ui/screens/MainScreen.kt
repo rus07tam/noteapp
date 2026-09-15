@@ -19,6 +19,8 @@ import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -35,6 +37,7 @@ import com.example.ui.viewmodel.NotesViewModel
 fun MainScreen(viewModel: NotesViewModel) {
     val currentScreen by viewModel.currentScreen.collectAsStateWithLifecycle()
     val hideNavLabels by viewModel.hideNavLabels.collectAsStateWithLifecycle()
+    val renderUnderCutout by viewModel.renderUnderCutout.collectAsStateWithLifecycle()
     val configuration = LocalConfiguration.current
     val isWideScreen = configuration.screenWidthDp >= 600
 
@@ -69,6 +72,7 @@ fun MainScreen(viewModel: NotesViewModel) {
         }
     } else {
         Scaffold(
+            contentWindowInsets = if (renderUnderCutout) WindowInsets(0, 0, 0, 0) else ScaffoldDefaults.contentWindowInsets,
             bottomBar = {
                 NavigationBar(
                     tonalElevation = 6.dp
@@ -91,7 +95,7 @@ fun MainScreen(viewModel: NotesViewModel) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
+                    .padding(bottom = innerPadding.calculateBottomPadding())
             ) {
                 ScreenContent(currentScreen = currentScreen, viewModel = viewModel)
             }

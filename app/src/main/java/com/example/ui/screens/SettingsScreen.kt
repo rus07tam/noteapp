@@ -18,11 +18,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.Navigation
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -58,6 +60,7 @@ fun SettingsScreen(viewModel: NotesViewModel) {
     val currentDateFormat by viewModel.dateFormatPattern.collectAsStateWithLifecycle()
     val storageLocation by viewModel.storageLocation.collectAsStateWithLifecycle()
     val hideNavLabels by viewModel.hideNavLabels.collectAsStateWithLifecycle()
+    val renderUnderCutout by viewModel.renderUnderCutout.collectAsStateWithLifecycle()
 
     var showChangeStorageDialog by remember { mutableStateOf(false) }
 
@@ -108,6 +111,38 @@ fun SettingsScreen(viewModel: NotesViewModel) {
                             Switch(
                                 checked = hideNavLabels,
                                 onCheckedChange = { viewModel.setHideNavLabels(it) }
+                            )
+                        }
+
+                        HorizontalDivider(
+                            modifier = Modifier.padding(vertical = 12.dp),
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                                Icon(Icons.Default.Fullscreen, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        stringResource(R.string.cutout_display_title),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        stringResource(R.string.cutout_display_desc),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                            Switch(
+                                checked = renderUnderCutout,
+                                onCheckedChange = { viewModel.setRenderUnderCutout(it) }
                             )
                         }
                     }

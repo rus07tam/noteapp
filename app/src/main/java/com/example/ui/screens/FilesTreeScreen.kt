@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CreateNewFolder
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.DriveFileMove
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
@@ -61,6 +62,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -76,6 +78,17 @@ data class CreateTarget(val folderId: Long?)
 sealed class MoveTarget {
     data class MoveDoc(val doc: DocumentEntity) : MoveTarget()
     data class MoveFld(val folder: FolderEntity) : MoveTarget()
+}
+
+fun isDescendantOf(sourceFolderId: Long, targetFolderId: Long, allFolders: List<FolderEntity>): Boolean {
+    if (sourceFolderId == targetFolderId) return true
+    var current: FolderEntity? = allFolders.find { it.id == targetFolderId }
+    while (current != null) {
+        if (current.parentId == sourceFolderId) return true
+        val nextParentId = current.parentId ?: return false
+        current = allFolders.find { it.id == nextParentId }
+    }
+    return false
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -95,8 +108,27 @@ fun FilesTreeScreen(viewModel: NotesViewModel) {
     var folderToDelete by remember { mutableStateOf<FolderEntity?>(null) }
     var docToDelete by remember { mutableStateOf<DocumentEntity?>(null) }
     var itemToMove by remember { mutableStateOf<MoveTarget?>(null) }
+    var draggingTarget by remember { mutableStateOf<MoveTarget?>(null) }
 
     val expandedFolders = remember { mutableMapOf<Long, Boolean>() }
+
+    val handleDropOnRoot: () -> Unit = {
+        when (val t = draggingTarget) {
+            is MoveTarget.MoveDoc -> viewModel.moveDocument(t.doc.id, null)
+            is MoveTarget.MoveFld -> viewModel.moveFolder(t.folder.id, null)
+            null -> {}
+        }
+        draggingTarget = null
+    }
+
+    val handleDropOnFolder: (Long) -> Unit = { targetFolderId ->
+        when (val t = draggingTarget) {
+            is MoveTarget.MoveDoc -> viewModel.moveDocument(t.doc.id, targetFolderId)
+            is MoveTarget.MoveFld -> viewModel.moveFolder(t.folder.id, targetFolderId)
+            null -> {}
+        }
+        draggingTarget = null
+    }
 
     Scaffold(
         topBar = {
@@ -212,11 +244,94 @@ fun FilesTreeScreen(viewModel: NotesViewModel) {
                     }
                 }
             } else {
+                // Drag and drop in-progress banner
+                AnimatedVisibility(
+                    visible = draggingTarget != null,
+                    enter = expandVertically(),
+                    exit = shrinkVertically()
+                ) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.DriveFileMove, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                val itemName = when (val t = draggingTarget) {
+                                    is MoveTarget.MoveDoc -> t.doc.title
+                                    is MoveTarget.MoveFld -> t.folder.name
+                                    null -> ""
+                                }
+                                Text(
+                                    stringResource(R.string.moving_item, itemName),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    stringResource(R.string.drag_to_move),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                )
+                            }
+                            IconButton(onClick = { draggingTarget = null }, modifier = Modifier.size(32.dp)) {
+                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.cancel_drag), modifier = Modifier.size(18.dp))
+                            }
+                        }
+                    }
+                }
+
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 12.dp)
                 ) {
+                    // Root drop zone when dragging
+                    if (draggingTarget != null) {
+                        item {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .clickable { handleDropOnRoot() },
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.85f)
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(1.5.dp, MaterialTheme.colorScheme.secondary),
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Center
+                                ) {
+                                    Icon(Icons.Default.FolderOpen, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        stringResource(R.string.drop_to_root),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = MaterialTheme.colorScheme.secondary,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     // Render Top-level Folders (parentId == null)
                     val rootFolders = folders.filter { it.parentId == null }
                     items(rootFolders.size, key = { "folder_${rootFolders[it].id}" }) { idx ->
@@ -229,6 +344,9 @@ fun FilesTreeScreen(viewModel: NotesViewModel) {
                             expandedFolders = expandedFolders,
                             searchQuery = searchQuery,
                             viewModel = viewModel,
+                            draggingTarget = draggingTarget,
+                            onStartDrag = { draggingTarget = it },
+                            onDropOnFolder = handleDropOnFolder,
                             onToggleExpand = { fId ->
                                 val current = expandedFolders[fId] ?: true
                                 expandedFolders[fId] = !current
@@ -267,10 +385,13 @@ fun FilesTreeScreen(viewModel: NotesViewModel) {
 
                         items(rootDocuments.size, key = { "doc_${rootDocuments[it].id}" }) { idx ->
                             val doc = rootDocuments[idx]
+                            val isDocDragged = draggingTarget is MoveTarget.MoveDoc && (draggingTarget as MoveTarget.MoveDoc).doc.id == doc.id
                             DocumentTreeItem(
                                 document = doc,
                                 depth = 0,
                                 viewModel = viewModel,
+                                isBeingDragged = isDocDragged,
+                                onStartDrag = { draggingTarget = MoveTarget.MoveDoc(doc) },
                                 onDelete = { docToDelete = doc },
                                 onMove = { itemToMove = MoveTarget.MoveDoc(doc) }
                             )
@@ -373,6 +494,9 @@ fun FolderTreeNode(
     expandedFolders: Map<Long, Boolean>,
     searchQuery: String,
     viewModel: NotesViewModel,
+    draggingTarget: MoveTarget? = null,
+    onStartDrag: (MoveTarget) -> Unit = {},
+    onDropOnFolder: (Long) -> Unit = {},
     onToggleExpand: (Long) -> Unit,
     onAddDocInFolder: (Long) -> Unit,
     onAddSubfolder: (Long) -> Unit,
@@ -397,6 +521,12 @@ fun FolderTreeNode(
     val markerColor = parseColorHex(folder.colorHex)
     var menuExpanded by remember { mutableStateOf(false) }
 
+    val isBeingDragged = draggingTarget is MoveTarget.MoveFld && draggingTarget.folder.id == folder.id
+    val canDropHere = draggingTarget != null && when (draggingTarget) {
+        is MoveTarget.MoveDoc -> draggingTarget.doc.folderId != folder.id
+        is MoveTarget.MoveFld -> draggingTarget.folder.id != folder.id && !isDescendantOf(draggingTarget.folder.id, folder.id, allFolders)
+    }
+
     Column(modifier = Modifier.fillMaxWidth()) {
         Card(
             modifier = Modifier
@@ -404,8 +534,10 @@ fun FolderTreeNode(
                 .padding(start = (depth * 16).dp, top = 2.dp, bottom = 2.dp)
                 .clickable { onToggleExpand(folder.id) },
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                containerColor = if (isBeingDragged) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             ),
+            border = if (isBeingDragged) androidx.compose.foundation.BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary) else null,
             shape = RoundedCornerShape(10.dp)
         ) {
             Row(
@@ -456,6 +588,19 @@ fun FolderTreeNode(
                         modifier = Modifier
                             .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
                             .padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+
+                // Drag handle
+                IconButton(
+                    onClick = { onStartDrag(MoveTarget.MoveFld(folder)) },
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        Icons.Default.DragIndicator,
+                        contentDescription = stringResource(R.string.drag_to_move),
+                        tint = if (isBeingDragged) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                        modifier = Modifier.size(18.dp)
                     )
                 }
 
@@ -517,6 +662,33 @@ fun FolderTreeNode(
             }
         }
 
+        // Drop affordance for this folder when dragging
+        if (canDropHere) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = (depth * 16 + 12).dp, top = 2.dp, bottom = 4.dp)
+                    .clickable { onDropOnFolder(folder.id) },
+                shape = RoundedCornerShape(8.dp),
+                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.DriveFileMove, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        stringResource(R.string.drop_into_folder, folder.name),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        }
+
         // Subtree
         AnimatedVisibility(
             visible = isExpanded,
@@ -534,6 +706,9 @@ fun FolderTreeNode(
                         expandedFolders = expandedFolders,
                         searchQuery = searchQuery,
                         viewModel = viewModel,
+                        draggingTarget = draggingTarget,
+                        onStartDrag = onStartDrag,
+                        onDropOnFolder = onDropOnFolder,
                         onToggleExpand = onToggleExpand,
                         onAddDocInFolder = onAddDocInFolder,
                         onAddSubfolder = onAddSubfolder,
@@ -546,10 +721,13 @@ fun FolderTreeNode(
 
                 // Documents in folder
                 childDocs.forEach { doc ->
+                    val isDocDragged = draggingTarget is MoveTarget.MoveDoc && (draggingTarget as MoveTarget.MoveDoc).doc.id == doc.id
                     DocumentTreeItem(
                         document = doc,
                         depth = depth + 1,
                         viewModel = viewModel,
+                        isBeingDragged = isDocDragged,
+                        onStartDrag = { onStartDrag(MoveTarget.MoveDoc(doc)) },
                         onDelete = { onDeleteDoc(doc) },
                         onMove = { onMoveItem(MoveTarget.MoveDoc(doc)) }
                     )
@@ -564,6 +742,8 @@ fun DocumentTreeItem(
     document: DocumentEntity,
     depth: Int,
     viewModel: NotesViewModel,
+    isBeingDragged: Boolean = false,
+    onStartDrag: () -> Unit = {},
     onDelete: () -> Unit,
     onMove: () -> Unit
 ) {
@@ -578,11 +758,11 @@ fun DocumentTreeItem(
                 viewModel.openDocumentInEditor(document.id)
             },
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = if (isBeingDragged) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f) else MaterialTheme.colorScheme.surface
         ),
         border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            markerColor.copy(alpha = 0.4f)
+            if (isBeingDragged) 1.5.dp else 1.dp,
+            if (isBeingDragged) MaterialTheme.colorScheme.primary else markerColor.copy(alpha = 0.4f)
         ),
         shape = RoundedCornerShape(10.dp)
     ) {
@@ -654,6 +834,19 @@ fun DocumentTreeItem(
                         )
                     }
                 }
+            }
+
+            // Drag handle
+            IconButton(
+                onClick = onStartDrag,
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    Icons.Default.DragIndicator,
+                    contentDescription = stringResource(R.string.drag_to_move),
+                    tint = if (isBeingDragged) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                    modifier = Modifier.size(18.dp)
+                )
             }
 
             // Context menu

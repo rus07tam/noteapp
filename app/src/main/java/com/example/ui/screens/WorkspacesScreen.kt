@@ -66,6 +66,7 @@ fun WorkspacesScreen(viewModel: NotesViewModel) {
     val activeWorkspaceId by viewModel.activeWorkspaceId.collectAsStateWithLifecycle()
 
     var showCreateDialog by remember { mutableStateOf(false) }
+    var workspaceToEdit by remember { mutableStateOf<WorkspaceEntity?>(null) }
     var workspaceToRename by remember { mutableStateOf<WorkspaceEntity?>(null) }
     var workspaceToClone by remember { mutableStateOf<WorkspaceEntity?>(null) }
     var workspaceToDelete by remember { mutableStateOf<WorkspaceEntity?>(null) }
@@ -202,6 +203,14 @@ fun WorkspacesScreen(viewModel: NotesViewModel) {
                                     )
                                 }
                                 DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.edit_workspace)) },
+                                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                                    onClick = {
+                                        menuExpanded = false
+                                        workspaceToEdit = ws
+                                    }
+                                )
+                                DropdownMenuItem(
                                     text = { Text(stringResource(R.string.rename)) },
                                     leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
                                     onClick = {
@@ -245,6 +254,18 @@ fun WorkspacesScreen(viewModel: NotesViewModel) {
                 showCreateDialog = false
             },
             onDismiss = { showCreateDialog = false }
+        )
+    }
+
+    // Dialog: Edit Workspace (Name, Icon, Color)
+    workspaceToEdit?.let { ws ->
+        EditWorkspaceDialog(
+            workspace = ws,
+            onConfirm = { newName, newIcon, newColorHex ->
+                viewModel.updateWorkspace(ws, newName, newIcon, newColorHex)
+                workspaceToEdit = null
+            },
+            onDismiss = { workspaceToEdit = null }
         )
     }
 
@@ -374,6 +395,105 @@ fun CreateWorkspaceDialog(
                 enabled = name.isNotBlank()
             ) {
                 Text(stringResource(R.string.create))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
+
+    if (showColorPicker) {
+        ColorPickerDialog(
+            currentColorHex = selectedColorHex,
+            onColorSelected = { selectedColorHex = it },
+            onDismiss = { showColorPicker = false }
+        )
+    }
+
+    if (showIconPicker) {
+        IconPickerDialog(
+            currentIcon = selectedIcon,
+            onIconSelected = { selectedIcon = it },
+            onDismiss = { showIconPicker = false }
+        )
+    }
+}
+
+@Composable
+fun EditWorkspaceDialog(
+    workspace: WorkspaceEntity,
+    onConfirm: (name: String, icon: String, colorHex: String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var name by remember { mutableStateOf(workspace.name) }
+    var selectedIcon by remember { mutableStateOf(workspace.icon) }
+    var selectedColorHex by remember { mutableStateOf(workspace.colorHex) }
+    var showColorPicker by remember { mutableStateOf(false) }
+    var showIconPicker by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.edit_workspace)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text(stringResource(R.string.workspace_name)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Icon Picker trigger
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp))
+                            .clickable { showIconPicker = true }
+                            .padding(8.dp)
+                    ) {
+                        Text("${stringResource(R.string.icon)} ", style = MaterialTheme.typography.bodyMedium)
+                        AppIconView(icon = selectedIcon, size = 26.dp, fontSize = 24.sp, tint = parseColorHex(selectedColorHex))
+                    }
+
+                    // Color Picker trigger
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp))
+                            .clickable { showColorPicker = true }
+                            .padding(8.dp)
+                    ) {
+                        Text("${stringResource(R.string.color)} ", style = MaterialTheme.typography.bodyMedium)
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(CircleShape)
+                                .background(parseColorHex(selectedColorHex))
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (name.isNotBlank()) {
+                        onConfirm(name.trim(), selectedIcon, selectedColorHex)
+                    }
+                },
+                enabled = name.isNotBlank()
+            ) {
+                Text(stringResource(R.string.save))
             }
         },
         dismissButton = {

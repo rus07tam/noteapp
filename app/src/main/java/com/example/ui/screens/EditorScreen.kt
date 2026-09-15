@@ -6,6 +6,10 @@ import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,6 +18,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -758,65 +763,76 @@ fun RichBlockTextField(
     }
 
     Column(modifier = modifier) {
-        // Rich text formatting toolbar when focused
-        if (isFocused) {
-            Row(
+        // Rich text formatting floating context menu - appears ONLY upon text selection
+        val hasSelection = !textFieldValue.selection.collapsed
+        AnimatedVisibility(
+            visible = hasSelection,
+            enter = fadeIn() + expandVertically(),
+            exit = fadeOut() + shrinkVertically()
+        ) {
+            Surface(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(bottom = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(bottom = 6.dp),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shadowElevation = 6.dp,
+                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
             ) {
-                IconButton(
-                    onClick = {
-                        val updated = RichTextHelper.toggleTag(textFieldValue, "**")
-                        textFieldValue = updated
-                        onTextChanged(updated.text)
-                    },
-                    modifier = Modifier.size(28.dp)
+                Row(
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.FormatBold, contentDescription = "Bold", modifier = Modifier.size(16.dp))
-                }
-                IconButton(
-                    onClick = {
-                        val updated = RichTextHelper.toggleTag(textFieldValue, "*")
-                        textFieldValue = updated
-                        onTextChanged(updated.text)
-                    },
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Icon(Icons.Default.FormatItalic, contentDescription = "Italic", modifier = Modifier.size(16.dp))
-                }
-                IconButton(
-                    onClick = {
-                        val updated = RichTextHelper.toggleTag(textFieldValue, "~~")
-                        textFieldValue = updated
-                        onTextChanged(updated.text)
-                    },
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Icon(Icons.Default.FormatStrikethrough, contentDescription = "Strike", modifier = Modifier.size(16.dp))
-                }
-                IconButton(
-                    onClick = {
-                        val updated = RichTextHelper.toggleUnderline(textFieldValue)
-                        textFieldValue = updated
-                        onTextChanged(updated.text)
-                    },
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Icon(Icons.Default.FormatUnderlined, contentDescription = "Underline", modifier = Modifier.size(16.dp))
-                }
-                IconButton(
-                    onClick = {
-                        val updated = RichTextHelper.toggleTag(textFieldValue, "`")
-                        textFieldValue = updated
-                        onTextChanged(updated.text)
-                    },
-                    modifier = Modifier.size(28.dp)
-                ) {
-                    Icon(Icons.Default.Code, contentDescription = "Code", modifier = Modifier.size(16.dp))
+                    IconButton(
+                        onClick = {
+                            val updated = RichTextHelper.toggleTag(textFieldValue, "**")
+                            textFieldValue = updated
+                            onTextChanged(updated.text)
+                        },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(Icons.Default.FormatBold, contentDescription = "Bold", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                    }
+                    IconButton(
+                        onClick = {
+                            val updated = RichTextHelper.toggleTag(textFieldValue, "*")
+                            textFieldValue = updated
+                            onTextChanged(updated.text)
+                        },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(Icons.Default.FormatItalic, contentDescription = "Italic", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                    }
+                    IconButton(
+                        onClick = {
+                            val updated = RichTextHelper.toggleTag(textFieldValue, "~~")
+                            textFieldValue = updated
+                            onTextChanged(updated.text)
+                        },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(Icons.Default.FormatStrikethrough, contentDescription = "Strike", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                    }
+                    IconButton(
+                        onClick = {
+                            val updated = RichTextHelper.toggleUnderline(textFieldValue)
+                            textFieldValue = updated
+                            onTextChanged(updated.text)
+                        },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(Icons.Default.FormatUnderlined, contentDescription = "Underline", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                    }
+                    IconButton(
+                        onClick = {
+                            val updated = RichTextHelper.toggleTag(textFieldValue, "`")
+                            textFieldValue = updated
+                            onTextChanged(updated.text)
+                        },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(Icons.Default.Code, contentDescription = "Code", modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                    }
                 }
             }
         }
@@ -1281,58 +1297,80 @@ fun TableBlockView(
             }
         }
 
-        // Table Grid
-        Box(
+        // Table Grid - Adaptive rendering to fill width when few columns, scroll when many
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
-                .horizontalScroll(scrollState)
                 .clip(RoundedCornerShape(8.dp))
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp))
         ) {
-            Column {
-                table.forEachIndexed { rowIndex, row ->
-                    val isHeader = rowIndex == 0
-                    Row(
-                        modifier = Modifier
-                            .background(
-                                if (isHeader) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent
-                            )
-                            .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
-                    ) {
-                        row.forEachIndexed { colIndex, cellValue ->
-                            Box(
-                                modifier = Modifier
-                                    .widthIn(min = 120.dp)
-                                    .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
-                                    .padding(6.dp),
-                                contentAlignment = Alignment.CenterStart
-                            ) {
-                                if (isEditMode) {
-                                    OutlinedTextField(
-                                        value = cellValue,
-                                        onValueChange = { newVal ->
-                                            val updated = table.mapIndexed { r, rList ->
-                                                if (r == rowIndex) {
-                                                    rList.mapIndexed { c, cVal ->
-                                                        if (c == colIndex) newVal else cVal
-                                                    }
-                                                } else rList
-                                            }
-                                            onTableUpdated(TableHelper.serializeTable(updated))
-                                        },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        singleLine = true,
-                                        textStyle = MaterialTheme.typography.bodySmall.copy(
-                                            fontWeight = if (isHeader) FontWeight.Bold else FontWeight.Normal
-                                        )
-                                    )
+            val totalCols = (table.firstOrNull()?.size ?: 1).coerceAtLeast(1)
+            val minCellWidth = 110.dp
+            val totalNaturalWidth = minCellWidth * totalCols
+            val needsScroll = totalNaturalWidth > maxWidth
+
+            val outerModifier = if (needsScroll) {
+                Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(scrollState)
+            } else {
+                Modifier.fillMaxWidth()
+            }
+
+            Box(modifier = outerModifier) {
+                Column(modifier = if (!needsScroll) Modifier.fillMaxWidth() else Modifier) {
+                    table.forEachIndexed { rowIndex, row ->
+                        val isHeader = rowIndex == 0
+                        Row(
+                            modifier = (if (!needsScroll) Modifier.fillMaxWidth() else Modifier)
+                                .background(
+                                    if (isHeader) MaterialTheme.colorScheme.surfaceVariant else Color.Transparent
+                                )
+                                .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
+                        ) {
+                            row.forEachIndexed { colIndex, cellValue ->
+                                val cellModifier = if (!needsScroll) {
+                                    Modifier
+                                        .weight(1f)
+                                        .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
+                                        .padding(6.dp)
                                 } else {
-                                    Text(
-                                        text = RichTextHelper.parseRichText(cellValue.ifBlank { "—" }, MaterialTheme.colorScheme.primary),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = if (isHeader) FontWeight.Bold else FontWeight.Normal,
-                                        color = if (isHeader) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                                    )
+                                    Modifier
+                                        .width(minCellWidth)
+                                        .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant)
+                                        .padding(6.dp)
+                                }
+                                Box(
+                                    modifier = cellModifier,
+                                    contentAlignment = Alignment.CenterStart
+                                ) {
+                                    if (isEditMode) {
+                                        OutlinedTextField(
+                                            value = cellValue,
+                                            onValueChange = { newVal ->
+                                                val updated = table.mapIndexed { r, rList ->
+                                                    if (r == rowIndex) {
+                                                        rList.mapIndexed { c, cVal ->
+                                                            if (c == colIndex) newVal else cVal
+                                                        }
+                                                    } else rList
+                                                }
+                                                onTableUpdated(TableHelper.serializeTable(updated))
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            singleLine = true,
+                                            textStyle = MaterialTheme.typography.bodySmall.copy(
+                                                fontWeight = if (isHeader) FontWeight.Bold else FontWeight.Normal
+                                            )
+                                        )
+                                    } else {
+                                        Text(
+                                            text = RichTextHelper.parseRichText(cellValue.ifBlank { "—" }, MaterialTheme.colorScheme.primary),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = if (isHeader) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (isHeader) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
                                 }
                             }
                         }
